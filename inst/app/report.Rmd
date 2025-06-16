@@ -1,0 +1,1914 @@
+---
+title: "Survey Analysis Dashboard"
+runtime: shiny
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+params:
+  dataset: NULL
+  dynamicCARI: NULL
+  admin1Filter: NULL
+  filterEnumerator:   NULL
+  fcsThresholdAdm1: NULL
+  admin1FilterFCS2: NULL
+  fcsThresholdAdm2: NULL
+  admin1FilterHDDS2:  NULL
+  admin1FilterEnumHDDS:     NULL
+  admin2FilterEnumHDDS:     "All"
+  admin1FilterrCSI2:     NULL
+  admin1FilterEnumrCSI: NULL
+  admin2FilterEnumrCSI: "All"
+  admin1FilterEnumFCS: NULL
+  admin2FilterEnumFCS: "All"
+  fcsThresholdAdm1Enum: NULL
+  rcsiBoxAdmin2Admin1: NULL
+  triangAdmin1:    NULL
+  triangAdmin2:    "All"
+  triangFCSCat:    NULL
+  admin1FilterHHS2:   NULL
+  admin1FilterEnumHHS:       NULL
+  admin2FilterEnumHHS:       "All"
+  matAdmin1:   NULL      # e.g. "Niamey"
+  matAdmin2:   NULL     # default to All
+  matFCSCat:   NULL  # or FCSCat28
+  stressVars:       NULL     # vector of 4 stress variable names
+  crisisVars:       NULL     # vector of 3 crisis variable names
+  emergencyVars:    NULL     # vector of 3 emergency variable names
+  admin1FilterLCS2: NULL
+  admin1FilterEnumLCS:     NULL
+  admin2FilterEnumLCS:     NULL
+  lcsStrategyAdmin1:      NULL
+  lcsStrategyAdmin2:      NULL
+  lcsStrategyEnu:         NULL
+  admin1FilterFES2:   NULL
+  admin1FilterEnumFES: NULL
+  admin2FilterEnumFES: NULL
+  fesBoxAdmin2Admin1:      NULL
+  admin1FilterCARI2:   NULL
+  admin1FilterEnumCARI:      NULL
+  admin2FilterEnumCARI:      NULL
+---
+
+<!--
+This R Markdown template uses a floating table of contents on the left
+and displays section content on the right. Top-level headers become
+main items; second-level headers become indented sub-items.
+-->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(DT)
+library(lubridate)
+library(forcats)
+library(tidyr)
+library(rstatix)
+library(scales)
+library(htmltools)
+library(glue)
+
+# ---- Define your HDDS color palette ----
+fcg_colors <- c("Acceptable" = "#27AE60", 
+                  "Borderline" = "#F1C40F", 
+                  "Poor"       = "#C0392B")
+
+HDDS_colors <- c(
+  "Phase 1 (>=5 Food Groups)" = "#c6ffc7",
+  "Phase 2 (=4 Food Groups)"   = "#ffe718",
+  "Phase 3 (=3 Food Groups)"   = "#e88400",
+  "Phase 4 (=2 Food Groups)"   = "#e02d00",
+  "Phase 5 (<=1 Food Groups)"  = "#5e0803"
+)
+CH_colors  <- c("Phase1" = "#c6ffc7",
+                  "Phase2" = "#ffe718",
+                  "Phase3" = "#e88400",
+                  "Phase4" = "#e02d00",
+                  "Phase5" = "#5e0803")
+  rCSI_colors <- c("Phase 1 (0-3)" = "#c6ffc7",
+                   "Phase 2 (4-18)" = "#ffe718",
+                   "Phase 3 (>=19)" = "#e88400")
+  HHS_colors <- c("Phase 1 (=0)" = "#c6ffc7",
+                  "Phase 2 (=1)" = "#ffe718",
+                  "Phase 3 (2-3)" = "#e88400",
+                  "Phase 4 (=4)" = "#e02d00",
+                  "Phase 5 (5-6)" = "#5e0803")
+  LHCS_colors <- c("NoStrategies" = "#F1ECE8",
+                   "StressStrategies" = "#D5B868",
+                   "CrisisStrategies" = "#F37847",
+                   "EmergencyStrategies" = "#C00000")
+  FES_Colors <- c("<50%"="#ECE1B1",
+                  "50-65%"="#E6B068",
+                  "65-75%"="#E67536",
+                  ">75%"="#D70000")
+  CARI_Colors <- c("Food secure" = "#FFD7D7",
+                   "Marginally food secure" = "#FF6E6E",
+                   "Moderately food insecure" = "#D70000",
+                   "Severely food insecure" = "#820000")
+  cell_colors <- c(
+      "#CDFACD","#FAE61E","#FAE61E","#E67800","#E67800",
+      "#CDFACD","#FAE61E","#E67800","#E67800","#C80000",
+      "#FAE61E","#FAE61E","#E67800","#C80000","#C80000",
+      "#FAE61E","#FAE61E","#FAE61E","#E67800","#E67800",
+      "#FAE61E","#FAE61E","#E67800","#E67800","#C80000",
+      "#FAE61E","#E67800","#E67800","#C80000","#640000",
+      "#FAE61E","#FAE61E","#E67800","#E67800","#C80000",
+      "#FAE61E","#E67800","#E67800","#C80000","#C80000",
+      "#E67800","#E67800","#E67800","#C80000","#640000"
+    )
+```
+
+```{r}
+# The processed dataset is passed as a parameter.
+df <- params$dataset
+```
+
+
+# Survey Progress
+
+## Submission Over Time
+```{r submission-over-time}
+# Summarize submissions per date
+submission <- df %>%
+  group_by(Survey_date) %>%
+  tally(name = "n")         # equivalent to count()
+
+# Recreate the line plot
+p <- ggplot(submission, aes(x = Survey_date, y = n)) +
+  geom_line(color = "steelblue") +
+  theme_minimal() +
+  labs(
+    title = "Submissions Over Time",
+    x     = "Date",
+    y     = "Number of Submissions"
+  )
+
+# Turn it into a Plotly widget
+plotly::ggplotly(p)
+```
+
+## Submission by Admin1
+```{r submission-by-admin1}
+# Summarize counts per Admin1
+countsadm1table <- df %>%
+  group_by(ADMIN1Name) %>%
+  tally(name = "n")
+
+# Recreate the bar chart
+p <- ggplot(countsadm1table, aes(x = reorder(ADMIN1Name, -n), y = n)) +
+  geom_col(fill = "steelblue") +
+  theme_minimal() +
+  labs(
+    title = "Survey Count by Admin1",
+    x     = "ADMIN1Name",
+    y     = "Number of Surveys"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Render as Plotly
+plotly::ggplotly(p)
+```
+
+## Submission by Admin2
+```{r submission-by-admin2}
+# Make sure the param is provided
+if (is.null(params$admin1Filter)) {
+  stop("Please set the `admin1Filter` parameter to an Admin1Name")
+}
+
+# Filter to that Admin1
+df_filtered <- df %>%
+  filter(ADMIN1Name == params$admin1Filter)
+
+# Summarize counts per Admin2
+counts_by_admin2 <- df_filtered %>%
+  group_by(ADMIN2Name) %>%
+  tally(name = "n") %>%
+  arrange(desc(n))
+
+# Build the bar chart
+p2 <- ggplot(counts_by_admin2, aes(
+    x = reorder(ADMIN2Name, -n), 
+    y = n
+  )) +
+  geom_col(fill = "steelblue") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5)
+  ) +
+  labs(
+    title = paste("Survey Count by Admin2 for", params$admin1Filter),
+    x     = "ADMIN2Name",
+    y     = "Number of Surveys"
+  )
+
+# Render as interactive Plotly
+plotly::ggplotly(p2)
+```
+
+## Submission by Enumerator
+```{r submission-by-enumerator}
+# Summarize counts per Enumerator
+counts <- df %>%
+  group_by(EnuName) %>%
+  tally(name = "n") %>%
+  arrange(desc(n))
+
+# Recreate the bar chart
+p <- ggplot(counts, aes(
+    x = reorder(EnuName, -n),
+    y = n
+  )) +
+  geom_col(fill = "steelblue") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1)
+  ) +
+  labs(
+    title = "Survey Count by Enumerator",
+    x     = "Enumerator",
+    y     = "Number of Surveys"
+  )
+
+# Render as Plotly for interactivity
+plotly::ggplotly(p)
+```
+
+## Enumerator (Admin2Name) Treemap
+```{r enumerator-treemap}
+# 1) Build the summary sentence
+enum_sel     <- params$filterEnumerator
+df_enum      <- params$dataset %>% filter(EnuName == enum_sel)
+total_surv   <- nrow(df_enum)
+
+# 2) Print as markdown
+cat(paste0(
+  "Enumerator **", enum_sel, "** conducted **", total_surv,
+  "** surveys in total.\n\n"
+))
+# 3) Prepare the treemap data
+df_enum    <- params$dataset %>% filter(EnuName == params$filterEnumerator)
+summary_df <- df_enum %>%
+  group_by(ADMIN2Name) %>%
+  summarise(count = n(), .groups = "drop")
+
+# 4) Create the Plotly treemap
+plot_ly(
+  data      = summary_df,
+  type      = "treemap",
+  labels    = ~ADMIN2Name,
+  values    = ~count,
+  parents   = NA,           # top-level
+  textinfo  = "label+value"
+)
+```
+
+# Food Consumption Score (FCS)
+
+## FCS by Admin1
+```{r fcs-by-admin1}
+# 1) Read the threshold from params
+fcsVar <- params$fcsThresholdAdm1  # e.g. "FCSCat21" or "FCSCat28"
+
+# 2) Summarize the data
+fcs_data <- df %>%
+  group_by(ADMIN1Name, .data[[fcsVar]]) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN1Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 3) Recreate the 100% stacked bar with custom hover text
+p <- ggplot(
+  fcs_data,
+  aes(
+    x    = ADMIN1Name,
+    y    = perc,
+    fill = .data[[fcsVar]],
+    text = paste0(
+      "ADMIN1Name: ", ADMIN1Name, "<br>",
+      fcsVar, ": ", .data[[fcsVar]], "<br>",
+      "n: ", n, "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = fcg_colors) +
+  labs(
+    title = paste("FCS Distribution by Admin1 (", fcsVar, ")", sep = ""),
+    x     = "Admin1",
+    y     = "Percentage",
+    fill  = fcsVar
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 4) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## FCS by Admin2
+```{r fcs-by-admin2}
+# 1) Read the selected Admin1 and threshold from params
+admin1_sel <- params$admin1FilterFCS2
+fcsVar    <- params$fcsThresholdAdm2
+
+# 2) Filter to that Admin1
+df_filtered <- df %>%
+  filter(ADMIN1Name == admin1_sel)
+
+# 3) Summarize by Admin2 and chosen FCS category
+fcs_data <- df_filtered %>%
+  group_by(ADMIN2Name, .data[[fcsVar]]) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN2Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Recreate stacked‐percentage bar with custom hover text
+p <- ggplot(
+  fcs_data,
+  aes(
+    x    = ADMIN2Name,
+    y    = perc,
+    fill = .data[[fcsVar]],
+    text = paste0(
+      "ADMIN2Name: ", ADMIN2Name, "<br>",
+      fcsVar, ": ", .data[[fcsVar]], "<br>",
+      "n: ", n, "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = fcg_colors) +
+  labs(
+    title = paste("FCS Distribution by Admin2 for", admin1_sel),
+    x     = "Admin2",
+    y     = "Percentage",
+    fill  = fcsVar
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Embed interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## FCS by Admin1 & Enumerator
+```{r fcs-by-admin1-enumerator}
+# 1) Grab the current Shiny‐selected filters
+admin1_sel <- params$admin1FilterEnumFCS
+admin2_sel <- params$admin2FilterEnumFCS
+fcsVar    <- params$fcsThresholdAdm1Enum
+
+# 2) Filter the data
+df_filtered <- df %>%
+  filter(ADMIN1Name == admin1_sel)
+if (!identical(admin2_sel, "All")) {
+  df_filtered <- df_filtered %>%
+    filter(ADMIN2Name == admin2_sel)
+}
+
+# 3) Summarize by Enumerator and chosen FCS category
+fcs_data <- df_filtered %>%
+  group_by(EnuName, .data[[fcsVar]]) %>%
+  tally(name = "n") %>%
+  group_by(EnuName) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Recreate the stacked‐percentage bar with hover text
+p <- ggplot(
+  fcs_data,
+  aes(
+    x    = EnuName,
+    y    = perc,
+    fill = .data[[fcsVar]],
+    text = paste0(
+      "Enumerator: ", EnuName, "<br>",
+      fcsVar, ": ", .data[[fcsVar]], "<br>",
+      "n: ", n, "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = fcg_colors) +
+  labs(
+    title = paste0("FCS by Enumerator for ", admin1_sel,
+                   if (!identical(admin2_sel, "All")) paste0(" / ", admin2_sel)),
+    x    = "Enumerator",
+    y    = "Percentage",
+    fill = fcsVar
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Embed interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## FCS Boxplot (Enumerator)
+```{r fcs-boxplot-enumerator}
+# Summarise median FCS per Enumerator and flag outliers
+FCSEnumNametable <- df %>%
+  group_by(EnuName) %>%
+  summarise(FCS_median  = median(FCS, na.rm = TRUE)) %>%
+  mutate(FCS_outlier = rstatix::is_outlier(FCS_median))
+
+# Recreate the boxplot with outlier points highlighted
+p <- ggplot(
+  FCSEnumNametable,
+  aes(
+    x     = "", 
+    y     = FCS_median
+  )
+) +
+  geom_boxplot() +
+  geom_point(aes(color = FCS_outlier), size = 2) +
+  theme_minimal() +
+  scale_color_manual(
+    name   = "Outlier",
+    values = c("FALSE" = "steelblue", "TRUE" = "firebrick")
+  ) +
+  labs(
+    title = "Median FCS by Enumerator",
+    x     = NULL,
+    y     = "Median FCS"
+  ) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+# Embed the interactive Plotly version
+plotly::ggplotly(p)
+```
+
+# Household Dietary Diversity Score (HDDS)
+
+## HDDS by Admin1
+```{r hdds-by-admin1}
+# Summarize by Admin1 and HDDS phase
+hdds_data <- df %>%
+  group_by(ADMIN1Name, HDDS_CH) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN1Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# Recreate the 100% stacked bar with custom hover text
+p <- ggplot(
+  hdds_data,
+  aes(
+    x    = ADMIN1Name,
+    y    = perc,
+    fill = HDDS_CH,
+    text = paste0(
+      "ADMIN1Name: ", ADMIN1Name, "<br>",
+      "HDDS Phase: ", HDDS_CH,      "<br>",
+      "n: ", n,                      "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = HDDS_colors) +
+  labs(
+    title = "HDDS Phase Distribution by Admin1",
+    x     = "Admin1",
+    y     = "Percentage",
+    fill  = "HDDS Phase"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## HDDS by Admin2
+```{r hdds-by-admin2}
+# Make sure the param is provided
+if (is.null(params$admin1FilterHDDS2)) {
+  stop("Please set the `admin1FilterHDDS2` parameter to a valid Admin1Name")
+}
+
+# Filter to that Admin1
+df_filtered <- df %>%
+  filter(ADMIN1Name == params$admin1FilterHDDS2)
+
+# Summarize by Admin2 and HDDS phase
+hdds_data <- df_filtered %>%
+  group_by(ADMIN2Name, HDDS_CH) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN2Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# Recreate the 100% stacked bar with custom hover text
+p <- ggplot(
+  hdds_data,
+  aes(
+    x    = ADMIN2Name,
+    y    = perc,
+    fill = HDDS_CH,
+    text = paste0(
+      "ADMIN2Name: ", ADMIN2Name, "<br>",
+      "HDDS Phase: ", HDDS_CH,      "<br>",
+      "n: ", n,                      "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = HDDS_colors) +
+  labs(
+    title = paste("HDDS Phase by Admin2 for", params$admin1FilterHDDS2),
+    x     = "Admin2",
+    y     = "Percentage",
+    fill  = "HDDS Phase"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## HDDS by Admin1 & Enumerator
+```{r hdds-by-admin1-enumerator}
+# 1) Grab the filters from params
+admin1_sel <- params$admin1FilterEnumHDDS
+admin2_sel <- params$admin2FilterEnumHDDS
+
+# 2) Filter the data
+df_filtered <- df %>%
+  filter(ADMIN1Name == admin1_sel)
+
+if (!identical(admin2_sel, "All")) {
+  df_filtered <- df_filtered %>%
+    filter(ADMIN2Name == admin2_sel)
+}
+
+# 3) Summarize by Enumerator & HDDS phase
+hdds_data <- df_filtered %>%
+  group_by(EnuName, HDDS_CH) %>%
+  tally(name = "n") %>%
+  group_by(EnuName) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Plot
+p <- ggplot(
+  hdds_data,
+  aes(
+    x    = EnuName,
+    y    = perc,
+    fill = HDDS_CH,
+    text = paste0(
+      "Enumerator: ", EnuName, "<br>",
+      "HDDS Phase: ", HDDS_CH,      "<br>",
+      "n: ", n,                      "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = HDDS_colors) +
+  labs(
+    title = paste0("HDDS by Enumerator for ", admin1_sel,
+                   if (!identical(admin2_sel, "All")) paste0(" / ", admin2_sel)),
+    x    = "Enumerator",
+    y    = "Percentage",
+    fill = "HDDS Phase"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Render interactive
+plotly::ggplotly(p, tooltip = "text")
+```
+
+# Reduce Coping Strategy Index (rCSI)
+
+## rCSI by Admin1
+```{r rcsi-by-admin1}
+# 1) Summarize counts & proportions
+rcsi_data <- df %>%
+  group_by(ADMIN1Name, rCSI_CH) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN1Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 2) Recreate the 100% stacked bar with custom hover text
+p <- ggplot(
+  rcsi_data,
+  aes(
+    x    = ADMIN1Name,
+    y    = perc,
+    fill = rCSI_CH,
+    text = paste0(
+      "ADMIN1Name: ", ADMIN1Name, "<br>",
+      "rCSI Phase: ", rCSI_CH,      "<br>",
+      "n: ", n,                      "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = rCSI_colors) +
+  labs(
+    title = "rCSI Phase Distribution by Admin1",
+    x     = "Admin1",
+    y     = "Percentage",
+    fill  = "rCSI Phase"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 3) Embed interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## rCSI by Admin2
+```{r rcsi-by-admin2}
+# 1) Grab the selected Admin1 from shiny inputs
+admin1_sel <- params$admin1FilterrCSI2
+
+# 2) Filter your data frame
+df_filtered <- df %>%
+  filter(ADMIN1Name == admin1_sel)
+
+# 3) Summarize by Admin2 and rCSI phase
+rcsi_data <- df_filtered %>%
+  group_by(ADMIN2Name, rCSI_CH) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN2Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Rebuild the 100% stacked bar with custom hover text
+p <- ggplot(
+  rcsi_data,
+  aes(
+    x    = ADMIN2Name,
+    y    = perc,
+    fill = rCSI_CH,
+    text = paste0(
+      "ADMIN2Name: ",   ADMIN2Name, "<br>",
+      "rCSI Phase: ",   rCSI_CH,      "<br>",
+      "n: ",            n,             "<br>",
+      "perc: ",         sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = rCSI_colors) +
+  labs(
+    title = paste("rCSI by Admin2 for", admin1_sel),
+    x     = "Admin2",
+    y     = "Percentage",
+    fill  = "rCSI Phase"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Render as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## rCSI by Admin1/2 & Enumerator
+```{r rcsi-by-admin1-2-enumerator}
+# 1) Grab the Shiny‐passed filters
+admin1_sel <- params$admin1FilterEnumrCSI
+admin2_sel <- params$admin2FilterEnumrCSI
+
+# 2) Filter the dataset
+df_filtered <- df %>%
+  filter(ADMIN1Name == admin1_sel)
+if (admin2_sel != "All") {
+  df_filtered <- df_filtered %>%
+    filter(ADMIN2Name == admin2_sel)
+}
+
+# 3) Summarize counts & proportions
+rcsi_data <- df_filtered %>%
+  group_by(EnuName, rCSI_CH) %>%
+  tally(name = "n") %>%
+  group_by(EnuName) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Recreate the stacked‐percentage bar with custom hover text
+p <- ggplot(
+  rcsi_data,
+  aes(
+    x    = EnuName,
+    y    = perc,
+    fill = rCSI_CH,
+    text = paste0(
+      "Enumerator: ", EnuName, "<br>",
+      "rCSI Phase: ", rCSI_CH,      "<br>",
+      "n: ",            n,             "<br>",
+      "perc: ",         sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = rCSI_colors) +
+  labs(
+    title = paste0("rCSI by Enumerator for ", admin1_sel,
+                   if (admin2_sel != "All") paste0(" / ", admin2_sel)),
+    x     = "Enumerator",
+    y     = "Percentage",
+    fill  = "rCSI Phase"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## rCSI Boxplot by Admin1
+```{r rcsi-boxplot-admin1}
+# 1) Use the full dataset `df` (no additional filter needed)
+p <- ggplot(
+  df,
+  aes(x = ADMIN1Name, y = rCSI)
+) +
+  geom_boxplot(fill = "steelblue") +
+  theme_minimal() +
+  labs(
+    title = "rCSI Distribution by Admin1",
+    x     = "Admin1",
+    y     = "rCSI"
+  )
+
+# 2) Render as an interactive Plotly chart and hide the legend
+plotly::ggplotly(p) %>%
+  layout(showlegend = FALSE)
+```
+
+## rCSI Boxplot by Admin2
+```{r rcsi-boxplot-admin2}
+# 1) Grab the selected Admin1 from params
+admin1_sel <- params$rcsiBoxAdmin2Admin1
+
+# 2) Filter the data to that Admin1
+filtered <- df %>%
+  filter(ADMIN1Name == admin1_sel)
+
+# 3) Recreate the boxplot
+p <- ggplot(
+  filtered,
+  aes(x = ADMIN2Name, y = rCSI)
+) +
+  geom_boxplot(fill = "tomato") +
+  theme_minimal() +
+  labs(
+    title = paste("rCSI by Admin2 for Admin1 =", admin1_sel),
+    x     = "Admin2",
+    y     = "rCSI"
+  )
+
+# 4) Embed as interactive Plotly, hide legend
+plotly::ggplotly(p) %>%
+  layout(showlegend = FALSE)
+```
+
+## Triangulation
+```{r rcsi-triangulation}
+# 1) Read filters from params
+admin1_sel <- params$triangAdmin1
+admin2_sel <- params$triangAdmin2
+fcsCat_sel <- params$triangFCSCat  # "FCSCat21" or "FCSCat28"
+
+# 2) Filter the main dataset
+df_tri <- df %>%
+  filter(ADMIN1Name == admin1_sel) %>%
+  { if (admin2_sel != "All") filter(., ADMIN2Name == admin2_sel) else . } %>%
+  # 3) Apply triangulation logic
+  filter((rCSI > 42 | rCSI < 3) &
+         (.data[[fcsCat_sel]] %in% c("Poor", "Borderline"))) %>%
+  mutate(
+    Triang = if_else(rCSI > 42,
+                     "Very High (rCSI > 42)",
+                     "Very Low (rCSI < 3)")
+  ) %>%
+  # 4) Summarize by enumerator
+  group_by(EnuName, Triang) %>%
+  tally(name = "n") %>%
+  group_by(EnuName) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 5) Build the 100% stacked bar with hover text
+p <- ggplot(
+  df_tri,
+  aes(
+    x    = EnuName,
+    y    = perc,
+    fill = Triang,
+    text = paste0(
+      "Enumerator: ", EnuName, "<br>",
+      "Triangulation: ", Triang, "<br>",
+      "n: ", n, "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(
+    title = paste("Triangulation of rCSI &", fcsCat_sel,
+                  "for", admin1_sel,
+                  if (admin2_sel != "All") paste("/", admin2_sel) else ""),
+    x    = "Enumerator",
+    y    = "Proportion",
+    fill = "Triangulation"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 6) Render as interactive Plotly, using only our custom tooltip
+plotly::ggplotly(p, tooltip = "text")
+```
+
+# Household Hunger Scale (HHS)
+
+## HHS by Admin1
+```{r hhs-by-admin1}
+# 1) Summarize counts & proportions by Admin1 and HHS phase
+hhs_data <- df %>%
+  group_by(ADMIN1Name, HHS_CH) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN1Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 2) Recreate 100% stacked bar with custom hover text
+p <- ggplot(
+  hhs_data,
+  aes(
+    x    = ADMIN1Name,
+    y    = perc,
+    fill = HHS_CH,
+    text = paste0(
+      "ADMIN1Name: ", ADMIN1Name, "<br>",
+      "HHS Phase: ",   HHS_CH,      "<br>",
+      "n: ",            n,           "<br>",
+      "perc: ",         sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = HHS_colors) +
+  labs(
+    title = "HHS Phase Distribution by Admin1",
+    x     = "Admin1",
+    y     = "Percentage",
+    fill  = "HHS Phase"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 3) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## HHS by Admin2
+```{r hhs-by-admin2}
+# 1) Grab the selected Admin1
+admin1_sel <- params$admin1FilterHHS2
+
+# 2) Filter to that Admin1
+df_filtered <- df %>%
+  filter(ADMIN1Name == admin1_sel)
+
+# 3) Summarize by Admin2 and HHS phase
+hhs_data <- df_filtered %>%
+  group_by(ADMIN2Name, HHS_CH) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN2Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Recreate the 100% stacked bar with custom hover text
+p <- ggplot(
+  hhs_data,
+  aes(
+    x    = ADMIN2Name,
+    y    = perc,
+    fill = HHS_CH,
+    text = paste0(
+      "ADMIN2Name: ", ADMIN2Name, "<br>",
+      "HHS Phase: ",   HHS_CH,      "<br>",
+      "n: ",            n,           "<br>",
+      "perc: ",         sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = HHS_colors) +
+  labs(
+    title = paste("HHS Phase by Admin2 for", admin1_sel),
+    x     = "Admin2",
+    y     = "Percentage",
+    fill  = "HHS Phase"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## HHS by Admin1/2 & Enumerator
+```{r hhs-by-admin1-2-enumerator}
+# 1) Grab the selected filters
+admin1_sel <- params$admin1FilterEnumHHS
+admin2_sel <- params$admin2FilterEnumHHS
+
+# 2) Filter the data
+df_filtered <- df %>%
+  filter(ADMIN1Name == admin1_sel)
+if (!identical(admin2_sel, "All")) {
+  df_filtered <- df_filtered %>%
+    filter(ADMIN2Name == admin2_sel)
+}
+
+# 3) Summarize by Enumerator and HHS phase
+hhs_data <- df_filtered %>%
+  group_by(EnuName, HHS_CH) %>%
+  tally(name = "n") %>%
+  group_by(EnuName) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Recreate the 100% stacked bar with hover text
+p <- ggplot(
+  hhs_data,
+  aes(
+    x    = EnuName,
+    y    = perc,
+    fill = HHS_CH,
+    text = paste0(
+      "Enumerator: ", EnuName, "<br>",
+      "HHS Phase: ",   HHS_CH,      "<br>",
+      "n: ",            n,           "<br>",
+      "perc: ",         sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = HHS_colors) +
+  labs(
+    title = paste(
+      "HHS Phase by Enumerator for", admin1_sel,
+      if (admin2_sel != "All") paste("/", admin2_sel) else ""
+    ),
+    x    = "Enumerator",
+    y    = "Percentage",
+    fill = "HHS Phase"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+# Matrix
+
+## Matrix Table
+```{r matrix-table}
+# 0) Read params
+admin1_sel <- params$matAdmin1
+admin2_sel <- params$matAdmin2
+fcsVar     <- params$matFCSCat
+
+# 1) Subset & create the three “_cat” columns
+mat_df <- params$dataset %>%
+  filter(ADMIN1Name == admin1_sel) %>%
+  { if (admin2_sel != "All") filter(., ADMIN2Name == admin2_sel) else . } %>%
+  mutate(
+    HHS_cat  = case_when(
+      HHS == 0        ~ "HHS=0",
+      HHS == 1        ~ "HHS=1",
+      HHS %in% 2:3    ~ "HHS=2-3",
+      HHS == 4        ~ "HHS=4",
+      HHS %in% 5:6    ~ "HHS=5-6",
+      TRUE            ~ NA_character_
+    ),
+    rCSI_cat = case_when(
+      rCSI < 4            ~ "<4",
+      rCSI >=4 & rCSI<=18 ~ "4-18",
+      rCSI > 18           ~ ">18",
+      TRUE                ~ NA_character_
+    ),
+    FCS_cat  = .data[[fcsVar]]
+  )
+
+total <- nrow(mat_df)
+
+# 2) Count & complete all combos
+long0 <- mat_df %>%
+  count(HHS_cat, rCSI_cat, FCS_cat, name = "n")
+
+long1 <- long0 %>%
+  complete(
+    HHS_cat  = c("HHS=0","HHS=1","HHS=2-3","HHS=4","HHS=5-6"),
+    rCSI_cat = c("<4","4-18",">18"),
+    FCS_cat  = c("Acceptable","Borderline","Poor"),
+    fill     = list(n = 0)
+  )
+
+# 3) Compute cell index
+long2 <- long1 %>%
+  mutate(
+    hhs_i  = as.integer(factor(HHS_cat,
+               levels=c("HHS=0","HHS=1","HHS=2-3","HHS=4","HHS=5-6")))-1,
+    rcsi_i = as.integer(factor(rCSI_cat,
+               levels=c("<4","4-18",">18")))-1,
+    fcs_i  = as.integer(factor(FCS_cat,
+               levels=c("Acceptable","Borderline","Poor")))-1,
+    cell   = rcsi_i * 15 + fcs_i * 5 + hhs_i + 1
+  )
+
+# 4) Define your 45 colors & white‐text cells
+cell_colors <- c(
+  "#CDFACD","#FAE61E","#FAE61E","#E67800","#E67800",
+  "#CDFACD","#FAE61E","#E67800","#E67800","#C80000",
+  "#FAE61E","#FAE61E","#E67800","#C80000","#C80000",
+  "#FAE61E","#FAE61E","#FAE61E","#E67800","#E67800",
+  "#FAE61E","#FAE61E","#E67800","#E67800","#C80000",
+  "#FAE61E","#E67800","#E67800","#C80000","#640000",
+  "#FAE61E","#FAE61E","#E67800","#E67800","#C80000",
+  "#FAE61E","#E67800","#E67800","#C80000","#C80000",
+  "#E67800","#E67800","#E67800","#C80000","#640000"
+)
+white_cells <- c(10,14,15,25,29,30,35,39,40,44,45)
+
+# 5) Generate HTML labels
+long3 <- long2 %>%
+  mutate(
+    pct   = 100 * n / total,
+    style = paste0(
+      "background:", cell_colors[cell], ";",
+      "padding:6px;",
+      "text-align:center;",
+      "font-weight:bold;",
+      if_else(cell %in% white_cells, "color:white;", "")
+    ),
+    label = sprintf(
+      '<div style="%s">%d<br/><small>(%.1f%%)</small></div>',
+      style, n, pct
+    )
+  ) %>%
+  select(HHS_cat, rCSI_cat, FCS_cat, label)
+
+# 6) Pivot to wide
+wide <- long3 %>%
+  pivot_wider(
+    names_from  = c(rCSI_cat, FCS_cat),
+    names_sep   = "|",
+    values_from = label
+  )
+
+# 7) Two‐row header
+sketch <- htmltools::tags$table(
+  class = 'display',
+  htmltools::tags$thead(
+    htmltools::tags$tr(
+      htmltools::tags$th(rowspan="2","HHS \\ rCSI \\ FCS"),
+      htmltools::tags$th(colspan="3","rCSI < 4"),
+      htmltools::tags$th(colspan="3","rCSI 4-18"),
+      htmltools::tags$th(colspan="3","rCSI > 18")
+    ),
+    htmltools::tags$tr(
+      rep(
+        list(
+          htmltools::tags$th("Acceptable"),
+          htmltools::tags$th("Borderline"),
+          htmltools::tags$th("Poor")
+        ),
+        3
+      )
+    )
+  )
+)
+
+# 8) Render with DT
+DT::datatable(
+  wide,
+  container  = sketch,
+  escape     = FALSE,
+  rownames   = FALSE,
+  class      = 'nowrap',
+  options    = list(
+    dom        = 't',
+    paging     = FALSE,
+    ordering   = FALSE,
+    scrollX    = TRUE,
+    autoWidth  = TRUE,
+    columnDefs = list(
+      list(className = 'dt-center', targets = 1:(ncol(wide)-1))
+    )
+  )
+)
+```
+
+# Livelihood Coping Strategies for Food Security (LCS-FS)
+
+## LCS by Admin1
+```{r lcs-by-admin1}
+# 1) Read params
+st <- params$stressVars
+cr <- params$crisisVars
+em <- params$emergencyVars
+
+# 2) Recompute dynamic LCS on the dataset
+df_lcs <- params$dataset %>%
+  mutate(
+    stress_coping    = if_else(rowSums(across(all_of(st), ~ .x %in% c(20,30))) > 0, 1, 0, missing = 0),
+    crisis_coping    = if_else(rowSums(across(all_of(cr), ~ .x %in% c(20,30))) > 0, 1, 0, missing = 0),
+    emergency_coping = if_else(rowSums(across(all_of(em), ~ .x %in% c(20,30))) > 0, 1, 0, missing = 0),
+    LhCSICat = case_when(
+      emergency_coping == 1 ~ 4,
+      crisis_coping    == 1 ~ 3,
+      stress_coping    == 1 ~ 2,
+      TRUE                 ~ 1
+    ),
+    LhCSICat = factor(
+      LhCSICat,
+      levels = c(1,2,3,4),
+      labels = c("NoStrategies","StressStrategies","CrisisStrategies","EmergencyStrategies")
+    )
+  )
+
+# 3) Summarize proportions by Admin1
+lcs_data <- df_lcs %>%
+  group_by(ADMIN1Name, LhCSICat) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN1Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Plot with hover text
+p <- ggplot(
+  lcs_data,
+  aes(
+    x    = ADMIN1Name,
+    y    = perc,
+    fill = LhCSICat,
+    text = paste0(
+      "ADMIN1Name: ", ADMIN1Name, "<br>",
+      "LCS Category: ", LhCSICat, "<br>",
+      "n: ", n, "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = LHCS_colors) +
+  labs(
+    title = "Dynamic LCS Category Distribution by Admin1",
+    x     = "Admin1",
+    y     = "Percentage",
+    fill  = "LCS Category"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Embed interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## LCS by Admin2
+```{r lcs-by-admin2}
+# 1) Read parameters
+admin1_sel <- params$admin1FilterLCS2
+st         <- params$stressVars
+cr         <- params$crisisVars
+em         <- params$emergencyVars
+
+# 2) Recompute dynamic LCS categories
+df_lcs <- params$dataset %>%
+  mutate(
+    stress_coping    = if_else(rowSums(across(all_of(st), ~ .x %in% c(20,30))) > 0, 1, 0, missing = 0),
+    crisis_coping    = if_else(rowSums(across(all_of(cr), ~ .x %in% c(20,30))) > 0, 1, 0, missing = 0),
+    emergency_coping = if_else(rowSums(across(all_of(em), ~ .x %in% c(20,30))) > 0, 1, 0, missing = 0),
+    LhCSICat = case_when(
+      emergency_coping == 1 ~ "EmergencyStrategies",
+      crisis_coping    == 1 ~ "CrisisStrategies",
+      stress_coping    == 1 ~ "StressStrategies",
+      TRUE                  ~ "NoStrategies"
+    ),
+    LhCSICat = factor(
+      LhCSICat,
+      levels = c("NoStrategies","StressStrategies","CrisisStrategies","EmergencyStrategies")
+    )
+  )
+
+# 3) Filter to the chosen Admin1
+df_filtered <- df_lcs %>%
+  filter(ADMIN1Name == admin1_sel)
+
+# 4) Summarize by Admin2
+lcs_data <- df_filtered %>%
+  group_by(ADMIN2Name, LhCSICat) %>%
+  tally(name = "n") %>%
+  group_by(ADMIN2Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 5) Plot
+p <- ggplot(
+  lcs_data,
+  aes(
+    x    = ADMIN2Name,
+    y    = perc,
+    fill = LhCSICat,
+    text = paste0(
+      "ADMIN2Name: ", ADMIN2Name, "<br>",
+      "LCS Cat: ",     LhCSICat,      "<br>",
+      "n: ",           n,              "<br>",
+      "perc: ",        sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = LHCS_colors) +
+  labs(
+    title = paste("LCS Category by Admin2 for", admin1_sel),
+    x     = "Admin2",
+    y     = "Percentage",
+    fill  = "LCS Category"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 6) Interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## LCS by Admin1/2 & Enumerator
+```{r lcs-by-admin1-2-enumerator}
+# 1) Read parameters
+admin1_sel <- params$admin1FilterEnumLCS
+admin2_sel <- params$admin2FilterEnumLCS
+st         <- params$stressVars
+cr         <- params$crisisVars
+em         <- params$emergencyVars
+
+# 2) Recompute dynamic LCS categories
+df_lcs <- params$dataset %>%
+  mutate(
+    stress_coping    = if_else(rowSums(across(all_of(st), ~ .x %in% c(20,30))) > 0, 1, 0, missing = 0),
+    crisis_coping    = if_else(rowSums(across(all_of(cr), ~ .x %in% c(20,30))) > 0, 1, 0, missing = 0),
+    emergency_coping = if_else(rowSums(across(all_of(em), ~ .x %in% c(20,30))) > 0, 1, 0, missing = 0),
+    LhCSICat = case_when(
+      emergency_coping == 1 ~ "EmergencyStrategies",
+      crisis_coping    == 1 ~ "CrisisStrategies",
+      stress_coping    == 1 ~ "StressStrategies",
+      TRUE                  ~ "NoStrategies"
+    ),
+    LhCSICat = factor(
+      LhCSICat,
+      levels = c("NoStrategies","StressStrategies","CrisisStrategies","EmergencyStrategies")
+    )
+  )
+
+# 3) Filter to Admin1, then Admin2 if needed
+df_filtered <- df_lcs %>%
+  filter(ADMIN1Name == admin1_sel)
+if (admin2_sel != "All") {
+  df_filtered <- df_filtered %>% filter(ADMIN2Name == admin2_sel)
+}
+
+# 4) Summarize by Enumerator
+lcs_data <- df_filtered %>%
+  group_by(EnuName, LhCSICat) %>%
+  tally(name = "n") %>%
+  group_by(EnuName) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 5) Build the stacked‐percentage bar with hover text
+p <- ggplot(
+  lcs_data,
+  aes(
+    x    = EnuName,
+    y    = perc,
+    fill = LhCSICat,
+    text = paste0(
+      "Enumerator: ", EnuName, "<br>",
+      "LCS Category: ", LhCSICat, "<br>",
+      "n: ", n, "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = LHCS_colors) +
+  labs(
+    title = paste0("LCS by Enumerator for ", admin1_sel,
+                   if (admin2_sel != "All") paste0(" / ", admin2_sel) else ""),
+    x    = "Enumerator",
+    y    = "Percentage",
+    fill = "LCS Category"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 6) Render interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## LCS by Strategy
+```{r lcs-by-strategy}
+# 1) Apply the cascading filters
+admin1_sel <- params$lcsStrategyAdmin1
+admin2_sel <- params$lcsStrategyAdmin2
+enu_sel    <- params$lcsStrategyEnu
+
+df_filt <- params$dataset %>%
+  filter(ADMIN1Name == admin1_sel)
+if (admin2_sel != "All") {
+  df_filt <- df_filt %>% filter(ADMIN2Name == admin2_sel)
+}
+if (enu_sel != "All") {
+  df_filt <- df_filt %>% filter(EnuName == enu_sel)
+}
+
+# 2) Gather the 10 selected strategy variables
+selected_vars <- c(params$stressVars, params$crisisVars, params$emergencyVars)
+
+# 3) Pivot to long format
+df_long <- df_filt %>%
+  pivot_longer(
+    cols      = all_of(selected_vars),
+    names_to  = "Strategy",
+    values_to = "Response"
+  )
+
+# 4) Define grouping orders
+stress_order <- c(
+  "Lcs_stress_Saving", "Lcs_stress_DomAsset", "Lcs_stress_ConsActive",
+  "Lcs_stress_SellFoodRation", "Lcs_stress_SellNFIRation", "Lcs_stress_EatOut",
+  "Lcs_stress_BorrowCash", "Lcs_stress_Pawn", "Lcs_stress_LessSchool",
+  "Lcs_stress_Utilities", "Lcs_stress_Edu", "Lcs_stress_BorrowFood",
+  "Lcs_stress_MoreLabour", "LcsR_stress_Animals"
+)
+crisis_order <- c(
+  "Lcs_crisis_ProdAssets", "Lcs_crisis_Barter", "Lcs_crisis_Health",
+  "Lcs_crisis_Housing", "Lcs_crisis_HHSeparation", "Lcs_crisis_OutSchool",
+  "Lcs_crisis_Migration", "Lcs_crisis_DomMigration", "Lcs_crisis_ChildWork",
+  "Lcs_crisis_Edu_Health", "LcsR_crisis_AgriCare", "LcsR_crisis_ImmCrops",
+  "LcsR_crisis_Seed"
+)
+emergency_order <- c(
+  "Lcs_em_ChildMigration", "Lcs_em_IllegalAct", "Lcs_em_Begged",
+  "Lcs_em_Marriage", "Lcs_em_ResAsset", "Lcs_em_Migration",
+  "LcsR_em_FemAnimal", "LcsR_em_WildFood"
+)
+desired_order <- c(
+  intersect(stress_order, selected_vars),
+  intersect(crisis_order, selected_vars),
+  intersect(emergency_order, selected_vars)
+)
+
+# 5) Tag each strategy with its type and reorder
+df_long <- df_long %>%
+  mutate(
+    Type = case_when(
+      Strategy %in% stress_order   ~ "Stress",
+      Strategy %in% crisis_order   ~ "Crisis",
+      Strategy %in% emergency_order ~ "Emergency",
+      TRUE                          ~ "Other"
+    ),
+    Type     = factor(Type, levels=c("Stress","Crisis","Emergency","Other")),
+    Strategy = factor(Strategy, levels = desired_order)
+  )
+
+# 6) Convert the numeric codes to labeled factors
+df_long <- df_long %>%
+  mutate(
+    Response = factor(
+      as.numeric(Response),
+      levels = c(10, 20, 30, 9999),
+      labels = c("No (10)",
+                 "No, already used (20)",
+                 "Yes (30)",
+                 "Not Applicable (NA-9999)")
+    )
+  )
+
+# 7) Build the 100% stacked bar with facets
+p <- ggplot(df_long, aes(x = Strategy, fill = Response)) +
+  geom_bar(position = "fill") +
+  facet_grid(. ~ Type, scales = "free_x", space = "free_x") +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = paste0(
+      "LCS Strategy Breakdown for ",
+      admin1_sel,
+      if (admin2_sel!="All") paste0(" / ", admin2_sel) else "",
+      if (enu_sel!="All") paste0(" / ", enu_sel) else ""
+    ),
+    x     = "LCS Strategy",
+    y     = "Percentage",
+    fill  = "Response Option"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.background = element_rect(fill="grey90", color="grey50"),
+    strip.text       = element_text(size=12, face="bold"),
+    axis.text.x      = element_text(angle=45, hjust=1)
+  )
+
+# 8) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = c("x","y","fill"))
+```
+
+# Food Expenditure Share (FES)
+
+## FES by Admin1
+```{r fes-by-admin1}
+# 1) Use the full dataset
+df <- params$dataset
+
+# 2) Summarize counts & proportions by Admin1 and 4-pt FES category
+fes_data <- df %>%
+  group_by(ADMIN1Name, Foodexp_4pt) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(ADMIN1Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 3) Recreate the 100% stacked bar with custom hover text
+p <- ggplot(
+  fes_data,
+  aes(
+    x    = ADMIN1Name,
+    y    = perc,
+    fill = Foodexp_4pt,
+    text = paste0(
+      "ADMIN1Name: ", ADMIN1Name, "<br>",
+      "FES Category: ", Foodexp_4pt, "<br>",
+      "n: ", n, "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = FES_Colors) +
+  labs(
+    title = "Food Expenditure Share (FES) by Admin1",
+    x     = "Admin1",
+    y     = "Percentage",
+    fill  = "FES Category"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 4) Embed as interactive Plotly with our “text” tooltip
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## FES by Admin2
+```{r fes-by-admin2}
+# 1) Read the selected Admin1 from params
+admin1_sel <- params$admin1FilterFES2
+
+# 2) Filter to that Admin1
+df_filtered <- params$dataset %>%
+  filter(ADMIN1Name == admin1_sel)
+
+# 3) Summarize counts & proportions by Admin2 and FES 4-pt category
+fes_data <- df_filtered %>%
+  group_by(ADMIN2Name, Foodexp_4pt) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(ADMIN2Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Recreate the 100% stacked bar with custom hover text
+p <- ggplot(
+  fes_data,
+  aes(
+    x    = ADMIN2Name,
+    y    = perc,
+    fill = Foodexp_4pt,
+    text = paste0(
+      "ADMIN2Name: ", ADMIN2Name, "<br>",
+      "FES Category: ", Foodexp_4pt, "<br>",
+      "n: ", n, "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = FES_Colors) +
+  labs(
+    title = paste("FES by Admin2 for", admin1_sel),
+    x     = "Admin2",
+    y     = "Percentage",
+    fill  = "FES Category"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## FES by Admin1/2 & Enumerator
+```{r fes-by-admin1-2-enumerator}
+# 1) Read the selected filters
+admin1_sel <- params$admin1FilterEnumFES
+admin2_sel <- params$admin2FilterEnumFES
+
+# 2) Filter the data
+df_filtered <- df %>%
+  filter(ADMIN1Name == admin1_sel)
+if (admin2_sel != "All") {
+  df_filtered <- df_filtered %>%
+    filter(ADMIN2Name == admin2_sel)
+}
+
+# 3) Summarize counts & proportions by Enumerator
+fes_data <- df_filtered %>%
+  group_by(EnuName, Foodexp_4pt) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(EnuName) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 4) Recreate the stacked‐percentage bar with hover text
+p <- ggplot(
+  fes_data,
+  aes(
+    x    = EnuName,
+    y    = perc,
+    fill = Foodexp_4pt,
+    text = paste0(
+      "Enumerator: ", EnuName, "<br>",
+      "FES Category: ", Foodexp_4pt, "<br>",
+      "n: ", n, "<br>",
+      "perc: ", sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = FES_Colors) +
+  labs(
+    title = paste("FES by Enumerator for", admin1_sel,
+                  if (admin2_sel != "All") paste("/", admin2_sel) else ""),
+    x     = "Enumerator",
+    y     = "Percentage",
+    fill  = "FES Category"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 5) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## FES Food Expenses by Admin1 outlier
+```{r fes-food-expenses-admin1-outlier}
+# 1) Create the boxplot of monthly food expenses by Admin1
+p <- ggplot(
+  df,
+  aes(x = ADMIN1Name, y = HHExpF_1M)
+) +
+  geom_boxplot(fill = "steelblue") +
+  scale_y_continuous(
+    labels = comma,                 # 1,000; 10,000; etc.
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Monthly Food Expenditure by Admin1",
+    x     = "Admin1",
+    y     = "Monthly Food Expenses"
+  )
+
+# 2) Convert to interactive Plotly, with comma thousand‐separator
+plotly::ggplotly(p) %>%
+  layout(
+    yaxis = list(
+      tickformat = ",.0f"          # D3 format: comma thousand-sep, no decimals
+    ),
+    showlegend = FALSE
+  )
+```
+
+## FES Food Expenses by Admin2 outlier
+```{r fes-food-expenses-admin2-outlier}
+# 1) Read the Admin1 filter from params
+admin1_sel <- params$fesBoxAdmin2Admin1
+
+# 2) Filter the full dataset to that Admin1
+df_filtered <- params$dataset %>%
+  filter(ADMIN1Name == admin1_sel)
+
+# 3) Build the boxplot of monthly food expenses by Admin2
+p <- ggplot(
+  df_filtered,
+  aes(x = ADMIN2Name, y = HHExpF_1M)
+) +
+  geom_boxplot(fill = "tomato") +
+  scale_y_continuous(
+    labels = comma,                 # 1,000; 2,000; etc.
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  theme_minimal() +
+  labs(
+    title = paste("Monthly Food Expenses by Admin2 for Admin1 =", admin1_sel),
+    x     = "Admin2",
+    y     = "Monthly Food Expenses"
+  )
+
+# 4) Convert to interactive Plotly with comma formatting
+plotly::ggplotly(p) %>%
+  layout(
+    yaxis     = list(tickformat = ",.0f"),  # thousands sep, no decimals
+    showlegend = FALSE
+  )
+```
+
+# CARI
+
+## CARI Console Table
+```{r cari-console-table}
+# 1) Get the pre-computed CARI data
+df_raw <- params$dynamicCARI
+
+# 2) Turn each domain into integers 1–4
+df <- df_raw %>%
+  mutate(
+    Foodexp_4pt = as.integer(fct_relevel(Foodexp_4pt, "<50%", "50-65%", "65-75%", ">75%")),
+    LhCSICat     = as.integer(fct_relevel(LhCSICat, "NoStrategies", "StressStrategies", "CrisisStrategies", "EmergencyStrategies")),
+    CARI_FES     = as.integer(fct_relevel(CARI_FES, "Food secure", "Marginally food secure", "Moderately food insecure", "Severely food insecure")),
+    FCS_4pt      = as.integer(FCS_4pt)
+  )
+
+# 3) Helper to compute rounded percentages
+pct4 <- function(var) {
+  df %>%
+    filter(!is.na({{ var }})) %>%
+    count({{ var }}) %>%
+    mutate(p = round(100 * n / sum(n), 0)) %>%
+    complete({{ var }} := 1:4, fill = list(p = 0)) %>%
+    arrange({{ var }}) %>%
+    pull(p)
+}
+
+# 4) Build your four vectors
+f <- pct4(FCS_4pt);   e <- pct4(Foodexp_4pt)
+c <- pct4(LhCSICat);  a <- pct4(CARI_FES)
+
+# 5) Glue into HTML
+html <- glue_data(
+  list(
+    f1=f[1],f2=f[2],f3=f[3],f4=f[4],
+    exp1=e[1],exp2=e[2],exp3=e[3],exp4=e[4],
+    cs1=c[1],cs2=c[2],cs3=c[3],cs4=c[4],
+    ca1=a[1],ca2=a[2],ca3=a[3],ca4=a[4]
+  ),
+  "
+  <table style='border-collapse:collapse;width:100%;text-align:center;'>
+    <tr>
+      <th style='border:1px solid #000;width:15%;'>Domain</th>
+      <th style='border:1px solid #000;width:20%;'>Indicator</th>
+      <th style='border:1px solid #000;background-color:#FFD7D7;width:15%;'>Food Secure</th>
+      <th style='border:1px solid #000;background-color:#FF6E6E;width:15%;'>Marginally Food Secure</th>
+      <th style='border:1px solid #000;background-color:#D70000;width:15%;'>Moderately Food Insecure</th>
+      <th style='border:1px solid #000;background-color:#820000;color:white;width:15%;'>Severely Food Insecure</th>
+    </tr>
+    <!-- Current Status -->
+    <tr>
+      <td style='border:1px solid #000;'><b>Current Status</b></td>
+      <td style='border:1px solid #000;'><em>Food consumption</em><br/><em>FCS and rCSI</em></td>
+      <td style='border:1px solid #000;'>Acceptable<br/><b>{f1}%</b></td>
+      <td style='border:1px solid #000;'>Acceptable &rCSI ≥ 4<br/><b>{f2}%</b></td>
+      <td style='border:1px solid #000;'>Borderline<br/><b>{f3}%</b></td>
+      <td style='border:1px solid #000;'>Poor<br/><b>{f4}%</b></td>
+    </tr>
+    <!-- Coping Capacity: Economic Vulnerability -->
+    <tr>
+      <td style='border:1px solid #000;' rowspan='2'><b>Coping Capacity</b></td>
+      <td style='border:1px solid #000;'><em>Economic Vulnerability</em><br/><em>Food Expenditure Share</em></td>
+      <td style='border:1px solid #000;'>&lt;50%<br/><b>{exp1}%</b></td>
+      <td style='border:1px solid #000;'>50–65%<br/><b>{exp2}%</b></td>
+      <td style='border:1px solid #000;'>65–75%<br/><b>{exp3}%</b></td>
+      <td style='border:1px solid #000;'>&gt;75%<br/><b>{exp4}%</b></td>
+    </tr>
+    <!-- Coping Capacity: Livelihood Strategies -->
+    <tr>
+      <td style='border:1px solid #000;'><em>Livelihood Coping Strategies</em><br/><em>Livelihood coping strategies</em></td>
+      <td style='border:1px solid #000;'>No coping<br/><b>{cs1}%</b></td>
+      <td style='border:1px solid #000;'>Stress<br/><b>{cs2}%</b></td>
+      <td style='border:1px solid #000;'>Crisis<br/><b>{cs3}%</b></td>
+      <td style='border:1px solid #000;'>Emergency<br/><b>{cs4}%</b></td>
+    </tr>
+    <!-- Final CARI -->
+    <tr>
+      <td colspan='2' style='border:1px solid #000; background-color:#ccc;'><b>CARI</b></td>
+      <td style='border:1px solid #000; background-color:#ccc;'><b>{ca1}%</b></td>
+      <td style='border:1px solid #000; background-color:#ccc;'><b>{ca2}%</b></td>
+      <td style='border:1px solid #000; background-color:#ccc;'><b>{ca3}%</b></td>
+      <td style='border:1px solid #000; background-color:#ccc;'><b>{ca4}%</b></td>
+    </tr>
+  </table>
+  "
+)
+
+# 6) Render the HTML “as is”
+knitr::asis_output(html)
+```
+
+
+## CARI by Admin1
+```{r cari-by-admin1}
+# 1) If your dataset already has CARI_FES, use it; 
+#    otherwise insert your dynamicCARI logic here to compute CARI_FES.
+df_cari <- params$dynamicCARI
+
+# 2) Summarize counts & proportions by Admin1 and CARI_FES
+chart_data <- df_cari %>%
+  group_by(ADMIN1Name, CARI_FES) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(ADMIN1Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 3) Recreate the 100% stacked bar with hover text
+p <- ggplot(
+  chart_data,
+  aes(
+    x    = ADMIN1Name,
+    y    = perc,
+    fill = CARI_FES,
+    text = paste0(
+      "ADMIN1Name: ", ADMIN1Name, "<br>",
+      "CARI: ",         CARI_FES,      "<br>",
+      "n: ",            n,             "<br>",
+      "perc: ",         sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = CARI_Colors) +
+  labs(
+    title = "CARI by Admin1",
+    x     = "Admin1",
+    y     = "Percentage",
+    fill  = "CARI Category"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 4) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## CARI by Admin2
+```{r cari-by-admin2}
+# 1) Read the selected Admin1 from params
+admin1_sel <- params$admin1FilterCARI2
+
+# 2) Use the dataset passed in (must already include a CARI_FES column)
+df_cari <- params$dynamicCARI
+
+# 3) Filter to that Admin1
+df_filtered <- df_cari %>%
+  filter(ADMIN1Name == admin1_sel)
+
+# 4) Summarize counts & proportions by Admin2 and CARI_FES
+chart_data <- df_filtered %>%
+  group_by(ADMIN2Name, CARI_FES) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(ADMIN2Name) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 5) Recreate the 100% stacked bar with custom hover text
+p <- ggplot(
+  chart_data,
+  aes(
+    x    = ADMIN2Name,
+    y    = perc,
+    fill = CARI_FES,
+    text = paste0(
+      "ADMIN2Name: ", ADMIN2Name, "<br>",
+      "CARI: ",         CARI_FES,      "<br>",
+      "n: ",            n,             "<br>",
+      "perc: ",         sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = CARI_Colors) +
+  labs(
+    title = paste("CARI by Admin2 for", admin1_sel),
+    x     = "Admin2",
+    y     = "Percentage",
+    fill  = "CARI Category"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 6) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+
+## CARI by Admin1/2 & Enumerator
+```{r cari-by-admin1-2-enumerator}
+# 1) Read the selected filters from params
+admin1_sel <- params$admin1FilterEnumCARI
+admin2_sel <- params$admin2FilterEnumCARI
+
+# 2) Use the dataset passed in (must include a CARI_FES column)
+df_cari <- params$dynamicCARI
+
+# 3) Filter by Admin1, then by Admin2 if not "All"
+df_filtered <- df_cari %>%
+  filter(ADMIN1Name == admin1_sel)
+if (admin2_sel != "All") {
+  df_filtered <- df_filtered %>%
+    filter(ADMIN2Name == admin2_sel)
+}
+
+# 4) Summarize counts & proportions by Enumerator
+chart_data <- df_filtered %>%
+  group_by(EnuName, CARI_FES) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(EnuName) %>%
+  mutate(perc = n / sum(n)) %>%
+  ungroup()
+
+# 5) Recreate the 100% stacked bar with hover text
+p <- ggplot(
+  chart_data,
+  aes(
+    x    = EnuName,
+    y    = perc,
+    fill = CARI_FES,
+    text = paste0(
+      "Enumerator: ", EnuName, "<br>",
+      "CARI: ",         CARI_FES,      "<br>",
+      "n: ",            n,             "<br>",
+      "perc: ",         sprintf("%.2f%%", perc * 100)
+    )
+  )
+) +
+  geom_col(position = "stack") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_fill_manual(values = CARI_Colors) +
+  labs(
+    title = paste("CARI by Enumerator for", admin1_sel,
+                  if (admin2_sel != "All") paste("/", admin2_sel) else ""),
+    x     = "Enumerator",
+    y     = "Percentage",
+    fill  = "CARI Category"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1))
+
+# 6) Embed as interactive Plotly
+plotly::ggplotly(p, tooltip = "text")
+```
+

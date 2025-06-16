@@ -1,0 +1,41 @@
+Package: myshinyapp
+Type: Package
+Title: Food security assessment data quality control
+Version: 0.0.0.9000
+Authors@R: 
+    person("Aliou Badara", "SAMAKE", , "samakealioubadara@gmail.com", role = c("aut", "cre"))
+Description: This package is an app for food security assessment indicators high frequency data quality control.
+Depends: 
+    R (>= 4.4.3)
+Imports:
+    shiny,
+    shinydashboard,
+    dplyr,
+    ggplot2,
+    tidyverse,
+    haven,
+    labelled,
+    plotly,
+    rstatix,
+    kableExtra,
+    lubridate,
+    DT,
+    forcats,
+    writexl,
+    rlang,
+    rmarkdown,
+    openxlsx,
+    htmltools,
+    purrr,
+    tidyr,
+    glue,
+    forcats,
+    scales,
+    devtools,
+    httr,
+    jsonlite
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
