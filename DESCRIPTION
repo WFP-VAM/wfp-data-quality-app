@@ -28,6 +28,7 @@ Imports:
     htmltools,
     purrr,
     tidyr,
+    treemapify,
     glue,
     forcats,
     scales,
