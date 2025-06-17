@@ -1,4 +1,4 @@
-Package: myshinyapp
+Package: wfp.data.quality.app
 Type: Package
 Title: Food security assessment data quality control
 Version: 0.0.0.9000
@@ -28,6 +28,7 @@ Imports:
     htmltools,
     purrr,
     tidyr,
+    treemapify,
     glue,
     forcats,
     scales,
