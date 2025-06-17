@@ -41,7 +41,7 @@ run_app()
 
 ## Requirements
 
-The application requires datasets with standard variable names. For more information on required variables, please see the in-app documentation or refer to [this guide](https://wfp-vam.github.io/RBD_FS_CH_guide_EN/combined-questionnaire-syntaxes-for-all-5-indicators.html).
+The application requires datasets with standard variable names from survey designer.
 
 ## Contact
 
