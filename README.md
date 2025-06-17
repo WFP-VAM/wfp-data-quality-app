@@ -24,19 +24,79 @@ This is a support and joint effort from WACARO RAM Team.
 
 ## Installation
 
+### Prerequisites
+
+- **R Version**: R >= 4.4.3 (as specified in DESCRIPTION)
+- **System Requirements**: Sufficient RAM to handle datasets up to 200MB
+- **Internet Connection**: Required for MoDa API integration and package installation
+
+### Step-by-Step Installation
+
+1. **Install R and RStudio** (if not already installed):
+   - Download R from [CRAN](https://cran.r-project.org/)
+   - Download RStudio from [Posit](https://posit.co/downloads/)
+
+2. **Install required system dependencies**:
+   ```r
+   # Install devtools if not already installed
+   if (!requireNamespace("devtools", quietly = TRUE)) {
+     install.packages("devtools")
+   }
+   ```
+
+3. **Clone and install the package**:
+   ```bash
+   # Clone the repository locally
+   git clone https://github.com/WFP-VAM/wfp-data-quality-app.git
+   cd wfp-data-quality-app
+   ```
+
+4. **Launch RStudio from the project directory**:
+   ```bash
+   # Open RStudio from the current directory
+   open wfp-data-quality-app.Rproj    # On macOS
+   # OR
+   rstudio wfp-data-quality-app.Rproj  # On Linux/Windows
+   # OR simply double-click the .Rproj file in your file manager
+   ```
+
+5. **Install the package** (in RStudio):
+   ```r
+   # Install the package with dependencies
+   devtools::install(".", dependencies = TRUE)
+   ```
+
+6. **Launch the application**:
+   ```r
+   # Load the library
+   library(wfp.data.quality.app)
+   
+   # Launch the application
+   run_app()
+   ```
+
+### Dependencies
+
+The package automatically installs the following dependencies:
+- **Core Shiny**: `shiny`, `shinydashboard`
+- **Data Processing**: `dplyr`, `tidyverse`, `haven`, `labelled`
+- **Visualization**: `ggplot2`, `plotly`, `treemapify`
+- **Statistical Analysis**: `rstatix`
+- **Data Export**: `writexl`, `openxlsx`, `DT`, `kableExtra`
+- **API Integration**: `httr`, `jsonlite`
+- **Other**: `lubridate`, `forcats`, `rlang`, `rmarkdown`, `htmltools`, `purrr`, `tidyr`, `glue`, `scales`, `devtools`
+
+
+### Development Mode
+
+For developers who want to modify the package:
+
 ```r
-# Install from GitHub
-# install.packages("devtools")
-devtools::install_github("aliou-badara/myshinyapp")
-```
+# Load the package in development mode (without installing)
+devtools::load_all(".")
 
-## Usage
-
-```r
-library(myshinyapp)
-
-# Launch the application
-run_app()
+# Or use R CMD for traditional installation
+R CMD INSTALL .
 ```
 
 ## Requirements
@@ -48,4 +108,4 @@ The application requires datasets with standard variable names from survey desig
 For questions or support, please contact:
 - Aliou Badara SAMAKE: samakealioubadara@gmail.com or alioubadara.samake@wfp.org
 
-[![R-CMD-check](https://github.com/aliou-badara/myshinyapp/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/aliou-badara/myshinyapp/actions)
+[![R-CMD-check](https://github.com/WFP-VAM/wfp-survey-data-quality-app/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/WFP-VAM/wfp-survey-data-quality-app/actions)
