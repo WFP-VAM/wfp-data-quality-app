@@ -30,11 +30,11 @@ Imports:
     tidyr,
     treemapify,
     glue,
-    forcats,
     scales,
-    devtools,
     httr,
-    jsonlite
+    jsonlite,
+    tools,
+    knitr
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
