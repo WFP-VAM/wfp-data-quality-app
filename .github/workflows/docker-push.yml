@@ -1,0 +1,46 @@
+name:  Build and Push Docker Image
+on:
+  push:
+    branches:
+      - main
+      - docker-ci
+permissions:
+  id-token: write
+  contents: read # For checkout
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCOUNT_ID: 485262375119
+      AWS_REGION: eu-central-1
+      ECR_REPOSITORY: wfp-data-quality-app
+    steps:
+      # Checkout repository
+      - uses: actions/checkout@v4.2.2
+
+      # Assume IAM role via OIDC
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/gh-oidc-role
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ env.ECR_REPOSITORY }}
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::8}
+          echo "Building image: $REGISTRY/$REPOSITORY:$IMAGE_TAG"
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          
+          # Also tag as latest
+          docker tag $REGISTRY/$REPOSITORY:$IMAGE_TAG $REGISTRY/$REPOSITORY:latest
+          docker push $REGISTRY/$REPOSITORY:latest
+
