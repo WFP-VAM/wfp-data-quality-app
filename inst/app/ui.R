@@ -87,14 +87,13 @@ ui <- dashboardPage(
 
             ),
 
+            # Tab 4: FCS
             tabItem(
                 tabName = "fcs",
                 fcsUI()
             ),
 
-            #########################################################################
-            # TAB 5: HDDS (with sub-tabs)
-            #########################################################################
+            # Tab 5: HHDS
             tabItem(
                 tabName = "hdds",
                 hhdsUI()

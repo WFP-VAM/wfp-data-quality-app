@@ -1,35 +1,52 @@
+
+
 homeUI <- function() {
   tagList(
     fluidRow(
-                          box(
-                            title = "Guidance",
-                            status = "primary", solidHeader = TRUE, width = 12,
-                            HTML(
-                              "<ol>\
-            <li><strong>Data Upload Tab</strong>: upload your data in <strong>SPSS (.sav)</strong> format. Max size 200 MB.<br>\
-              <ul>\
-                <li><strong>Upload .sav file</strong>: Select <strong>Upload .sav file</strong> under <strong>Choose data source</strong> dropdown list to browse your file.</li>\
-              </ul>\
-              Once loaded, you’ll see a preview of your data.\
-            </li>\
-            <li>Ensure your dataset contains <strong>all variables in the table below</strong>, plus the <strong>standard variable names of the key indicators</strong>: \
-              <strong><a href='https://docs.wfp.org/api/documents/WFP-0000134782/download/' target='_blank'>FCS</a></strong>, \
-              <strong><a href='https://docs.wfp.org/api/documents/WFP-0000136453/download/' target='_blank'>HDDS</a></strong>, \
-              <strong><a href='https://docs.wfp.org/api/documents/WFP-0000109062/download/' target='_blank'>HHS</a></strong>, \
-              <strong><a href='https://docs.wfp.org/api/documents/WFP-0000109756/download/' target='_blank'>rCSI</a></strong>, \
-              <strong><a href='https://docs.wfp.org/api/documents/WFP-0000134094/download/' target='_blank'>LCS-FS</a></strong> \
-              <strong><a href='https://docs.wfp.org/api/documents/WFP-0000147820/download//' target='_blank'>(List of strategies)</a></strong> and \
-              <strong><a href='https://docs.wfp.org/api/documents/WFP-0000134243/download/' target='_blank'>FES</a></strong>.\
-              <strong>This is mandatory for the app to work.</strong>\
-            </li>\
-            <li>If a variable (e.g. supervisor’s name) is missing, create an empty column named <code>EnuSupervisorName</code>.</li>\
-            <li>If you encounter issues, please contact \
-              <strong><a href='mailto:rbd.ram@wfp.org'>WACARO RAM</a></strong> or \
-              <strong><a href='mailto:alioubadara.samake@wfp.org'>Aliou Badara SAMAKE</a></strong>.\
-            </li>\
-          </ol>"
-                            )
-                          )
+      box(
+        title = "Guidance",
+        status = "primary", 
+        solidHeader = TRUE, 
+        width = 12,
+        tags$ol(
+          tags$li(
+            strong("Data Upload Tab"), ": upload your data in ", 
+            strong("SPSS (.sav)"), " format. Max size 200 MB.",
+            tags$ul(
+              tags$li(
+                strong("Upload .sav file"), ": Select ", 
+                strong("Upload .sav file"), 
+                " under ", 
+                strong("Choose data source"), 
+                " dropdown list to browse your file."
+              )
+            ),
+            "Once loaded, you'll see a preview of your data."
+          ),
+          tags$li(
+            "Ensure your dataset contains ", 
+            strong("all variables in the table below"), 
+            ", plus the ", 
+            strong("standard variable names of the key indicators"), ": ",
+            make_link("FCS", "https://docs.wfp.org/api/documents/WFP-0000134782/download/"), ", ",
+            make_link("HDDS", "https://docs.wfp.org/api/documents/WFP-0000136453/download/"), ", ",
+            make_link("HHS", "https://docs.wfp.org/api/documents/WFP-0000109062/download/"), ", ",
+            make_link("rCSI", "https://docs.wfp.org/api/documents/WFP-0000109756/download/"), ", ",
+            make_link("LCS-FS", "https://docs.wfp.org/api/documents/WFP-0000134094/download/"), " ",
+            make_link("(List of strategies)", "https://docs.wfp.org/api/documents/WFP-0000147820/download/"), " and ",
+            make_link("FES", "https://docs.wfp.org/api/documents/WFP-0000134243/download/"), ".",
+            strong("This is mandatory for the app to work.")
+          ),
+          tags$li(
+            "If a variable (e.g. supervisor's name) is missing, create an empty column named ",
+            tags$code("EnuSupervisorName"), "."
+          ),
+          tags$li(
+            "If you encounter issues,",
+            tags$a(href = "https://github.com/WFP-VAM/wfp-data-quality-app/issues", "please open an Issue on the main GitHub repository")
+          )
+        )
+      )
     ),
     fluidRow(
       box(
