@@ -1,33 +1,32 @@
 ############################
 ## Load Packages
 ############################
-library(shiny)
-library(shinydashboard)
+library(devtools)
 library(dplyr)
-library(ggplot2)
-library(tidyverse)
-library(haven)
-library(labelled)
-library(plotly)
-library(rstatix)
-library(kableExtra)
-library(lubridate)
 library(DT)
 library(forcats)
-library(treemapify) # for treemap
-library(writexl)
-library(rlang)
-library(rmarkdown)
-library(openxlsx)
-library(htmltools)
-library(purrr)
-library(tidyr)
+library(ggplot2)
 library(glue)
-library(forcats)
-library(scales)
-library(devtools)
+library(haven)
+library(htmltools)
 library(httr)
 library(jsonlite)
+library(kableExtra)
+library(labelled)
+library(lubridate)
+library(openxlsx)
+library(plotly)
+library(purrr)
+library(rlang)
+library(rmarkdown)
+library(rstatix)
+library(scales)
+library(shiny)
+library(shinydashboard)
+library(tidyr)
+library(tidyverse)
+library(treemapify) # for treemap
+library(writexl)
 
 ############################
 ## Increase upload limit
@@ -38,7 +37,7 @@ options(shiny.maxRequestSize = 200 * 1024^2) # 200 MB
 ## UI
 ############################
 ui <- dashboardPage(
-    dashboardHeader(title = "Data Quality Check"),
+    dashboardHeader(title = "WFP Data Quality Check"),
     dashboardSidebar(
         sidebarMenu(
             id = "tabs",
@@ -57,62 +56,12 @@ ui <- dashboardPage(
         )
     ),
     dashboardBody(
-        # 1) Insert the CSS for cells 1..45 → FEWS‑NET colours
         tags$head(
             # Load the font
             tags$link(
-                href = "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap",
-                rel  = "stylesheet"
+                href = "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap",
             ),
-            # Your custom CSS overrides
-            tags$style(HTML("
-        /* Fonts */
-          body, .sidebar, .main-header .navbar {
-            font-family: 'Poppins', sans-serif;
-            color: #404040;         /* WFP Body Text */
-            background: #ffffff;    /* WFP White */
-          }
-
-          /* Header gradient (Primary → Accent) */
-          .skin-blue .main-header .logo {
-            background: linear-gradient(135deg, #2A93FC, #1F6EBC) !important;
-            color: #FFF !important;
-            font-weight: 600;
-            font-size: 1.4em;
-          }
-          .skin-blue .main-header .navbar {
-            background: linear-gradient(135deg, #1F6EBC, #2A93FC) !important;
-          }
-
-          /* Sidebar background & active item */
-          .skin-blue .main-sidebar {
-            background: #003399 !important;  /* WFP Dark Blue */
-          }
-          .skin-blue .sidebar-menu > li.active > a {
-            background: #2A93FC !important;  /* WFP Primary Blue */
-            color: #FFF !important;
-          }
-          .skin-blue .sidebar-menu > li > a {
-            color: #000000 !important;       /* very light grey for links */
-          }
-          .skin-blue .sidebar-menu > li > a:hover {
-            background: #57AAFD !important;  /* a lighter WFP blue */
-            color: #FFF !important;
-          }
-
-          /* Cards and boxes */
-          .box, .info-box, .small-box {
-            border-radius: 12px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
-            border: none !important;
-          }
-          .box-header .box-title {
-            font-weight: 600 !important;
-            font-size: 1.1em !important;
-          }
-        .matrix-table th, .matrix-table td { padding: 0; border: 1px solid #444; }
-      .matrix-table th { background: #eee; }
-      "))
+            includeCSS("www/custom.css")
         ),
         tabItems(
 
@@ -130,7 +79,6 @@ ui <- dashboardPage(
             <li><strong>Data Upload Tab</strong>: upload your data in <strong>SPSS (.sav)</strong> format. Max size 200 MB.<br>\
               <ul>\
                 <li><strong>Upload .sav file</strong>: Select <strong>Upload .sav file</strong> under <strong>Choose data source</strong> dropdown list to browse your file.</li>\
-                <li><strong>MoDa API</strong>: Select <strong>Load from MoDa API (.sav)</strong> from the dropdown list then enter your <strong>Form ID</strong> and your <strong>Token</strong> from MoDa.</li>\
               </ul>\
               Once loaded, you’ll see a preview of your data.\
             </li>\
@@ -180,10 +128,10 @@ ui <- dashboardPage(
             ),
 
 
-
             ########################
             # TAB 2: DATA UPLOAD
             ########################
+            
             tabItem(
                 tabName = "upload",
                 fluidRow(

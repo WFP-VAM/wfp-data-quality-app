@@ -11,5 +11,6 @@ run_app <- function() {
   if (app_dir == "") {
     stop("Could not find the Shiny app directory. Did you install the 'wfp.data.quality.app' package correctly?")
   }
+  options(shiny.autoreload.interval = 2000)
   shiny::runApp(app_dir, display.mode = "normal")
 }
