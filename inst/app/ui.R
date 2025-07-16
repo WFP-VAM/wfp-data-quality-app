@@ -31,6 +31,7 @@ library(writexl)
 # custom files
 source("tabs/home.R")
 source("tabs/data_upload.R")
+source("tabs/survey_progress.R")
 
 # Set maximum file upload size to 200 MB
 options(shiny.maxRequestSize = 200 * 1024^2) # 200 MB
@@ -81,68 +82,7 @@ ui <- dashboardPage(
             
             tabItem(
                 tabName = "upload",
-                fluidRow(
-                    box(
-                        width = 12,
-                        selectInput("data_source", "Choose data source:",
-                            choices = c(
-                                "Upload .sav file" = "spss",
-                                "Load from MoDa API (.sav)" = "moda"
-                            )
-                        )
-                    )
-                ),
-
-                # SPSS file upload
-                conditionalPanel(
-                    condition = "input.data_source == 'spss'",
-                    fluidRow(
-                        box(
-                            title = "Upload SPSS (.sav) Data", width = 6, status = "primary", solidHeader = TRUE,
-                            fileInput("file", "Choose a .sav file", accept = ".sav"),
-                            helpText("Allowed size up to 200 MB.")
-                        ),
-                        box(
-                            title = "File Info", width = 6, status = "info", solidHeader = TRUE,
-                            verbatimTextOutput("fileUploadedMessage")
-                        )
-                    )
-                ),
-
-                # MoDa API inputs
-                conditionalPanel(
-                    condition = "input.data_source == 'moda'",
-                    fluidRow(
-                        box(
-                            title = "MoDa API settings", width = 6, status = "warning", solidHeader = TRUE,
-                            textInput("moda_formid", "Form ID", placeholder = "e.g. 152205"),
-                            textInput("moda_token", "Bearer token"),
-                            actionButton("moda_load", "Load from MoDa")
-                        ),
-                        box(
-                            title = "MoDa status", width = 6, status = "info", solidHeader = TRUE,
-                            verbatimTextOutput("moda_status")
-                        )
-                    )
-                ),
-
-                # Preview & summary (same for both)
-                fluidRow(
-                    box(
-                        title = "Preview of Data", width = 12, status = "primary", solidHeader = TRUE,
-                        DT::dataTableOutput("dataPreview")
-                    )
-                ),
-                fluidRow(
-                    box(
-                        title = "Data Summary", status = "info", solidHeader = TRUE, width = 12,
-                        fluidRow(
-                            valueBoxOutput("obsBox", width = 4),
-                            valueBoxOutput("varBox", width = 4),
-                            valueBoxOutput("dupBox", width = 4)
-                        )
-                    )
-                )
+                dataUploadUI()
             ),
 
             ########################
@@ -150,106 +90,8 @@ ui <- dashboardPage(
             ########################
             tabItem(
                 tabName = "survey",
-                fluidRow(
-                    tabBox(
-                        id = "surveyTabs", width = 12,
+                surveyProgressUI()
 
-                        ## Sub-tab A) Submissions Over Time
-                        tabPanel(
-                            "Submissions Over Time",
-                            fluidRow(
-                                box(
-                                    title = "Submissions Over Time", status = "primary", solidHeader = TRUE, width = 12,
-                                    plotlyOutput("plotSubmission")
-                                )
-                            )
-                        ),
-
-                        ## Sub-tab B) Count by Admin1
-                        tabPanel(
-                            "Submission by Admin1",
-                            fluidRow(
-                                box(
-                                    title = "Submission by Admin1", status = "primary", solidHeader = TRUE, width = 12,
-                                    plotlyOutput("plotAdm1")
-                                )
-                            )
-                        ),
-
-                        ## Sub-tab C) Count by Admin2 (single Admin1 filter)
-                        tabPanel(
-                            "Submission by Admin2",
-                            fluidRow(
-                                box(
-                                    title = "Select Admin1Name", status = "warning", solidHeader = TRUE, width = 4,
-                                    selectInput("admin1Filter", "Admin1Name:",
-                                        choices = character(0), # populated in server
-                                        selected = NULL
-                                    )
-                                ),
-                                box(
-                                    title = "Submission by Admin2", status = "primary", solidHeader = TRUE, width = 8,
-                                    plotlyOutput("plotAdm2Filter")
-                                )
-                            )
-                        ),
-
-                        ## Sub-tab D) Enumerator by Admin1Name (Histogram)
-                        tabPanel(
-                            "Submission by Enumerator by Admin level",
-                            # first row: two filters side by side
-                            fluidRow(
-                                box(
-                                    title = "Select Admin1Name", status = "warning", solidHeader = TRUE, width = 6,
-                                    selectInput("admin1FilterEnum", "Admin1Name:",
-                                        choices = character(0),
-                                        selected = NULL
-                                    )
-                                ),
-                                box(
-                                    title = "Select Admin2Name", status = "warning", solidHeader = TRUE, width = 6,
-                                    selectInput("admin2FilterEnum", "Admin2Name:",
-                                        choices = character(0),
-                                        selected = NULL
-                                    )
-                                )
-                            ),
-                            # second row: the histogram
-                            fluidRow(
-                                box(
-                                    title = "Surveys by Enumerator (Histogram)", status = "primary", solidHeader = TRUE, width = 12,
-                                    plotlyOutput("plotAdm1Enum")
-                                )
-                            )
-                        ),
-
-                        ## Sub-tab E) Enumerator by Admin2Name (Treemap)
-                        tabPanel(
-                            "Submission by Enumerator (by Admin2) Treemap",
-                            fluidRow(
-                                column(
-                                    4,
-                                    box(
-                                        title = "Select Enumerator", status = "warning", solidHeader = TRUE, width = 12,
-                                        selectInput("filterEnumerator", "Enumerator:",
-                                            choices = character(0), # updated in server
-                                            selected = NULL,
-                                            multiple = FALSE
-                                        )
-                                    )
-                                ),
-                                column(
-                                    8,
-                                    box(
-                                        title = "Treemap by Admin2Name", status = "primary", solidHeader = TRUE, width = 12,
-                                        textOutput("treemapCountEnumerator"), # Show total # of surveys
-                                        plotlyOutput("plotAdm2EnumTree")
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
             ),
 
             #########################################################################
