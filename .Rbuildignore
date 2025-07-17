@@ -1,3 +1,6 @@
+^renv$
+^renv\.lock$
 ^myshinyapp\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^main\.R$

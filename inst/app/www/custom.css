@@ -1,0 +1,70 @@
+/* Fonts */
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+body,
+.sidebar,
+.main-header .navbar {
+    font-family: 'Open Sans', sans-serif;
+    color: #404040;
+    /* WFP Body Text */
+    background: #ffffff;
+    /* WFP White */
+}
+/* Header gradient (Primary → Accent) */
+.skin-blue .main-header .logo {
+    background: #007DBC !important;
+    color: #FFF !important;
+    font-weight: 600;
+    font-size: 1.4em;
+}
+
+.skin-blue .main-header .navbar {
+    background: #007DBC !important;
+}
+
+/* Sidebar background & active item */
+.skin-blue .main-sidebar {
+    background: #007DBC !important;
+    /* WFP Dark Blue */
+}
+
+.skin-blue .sidebar-menu>li.active>a {
+    background: #007DBC !important;
+    /* WFP Primary Blue */
+    color: #FFF !important;
+}
+
+.skin-blue .sidebar-menu>li>a {
+    color: #000000 !important;
+    /* very light grey for links */
+}
+
+.skin-blue .sidebar-menu>li>a:hover {
+    background: #007DBC !important;
+    /* a lighter WFP blue */
+    color: #FFF !important;
+}
+
+/* Cards and boxes */
+.box,
+.info-box,
+.small-box {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    border: none !important;
+}
+
+.box-header .box-title {
+    font-weight: 600 !important;
+    font-size: 1.1em !important;
+}
+
+.matrix-table th,
+.matrix-table td {
+    padding: 0;
+    border: 1px solid #444;
+}
+
+.matrix-table th {
+    background: #eee;
+}

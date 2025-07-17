@@ -85,3 +85,6 @@ packrat/src/
 renv/library/
 renv/python/
 renv/staging/
+
+# custom
+main.R
