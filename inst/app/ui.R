@@ -39,8 +39,8 @@ source("ui/tabs/fes.R")
 source("ui/tabs/cari.R")
 source("ui/tabs/report.R")
 
-# Set maximum file upload size to 200 MB
-options(shiny.maxRequestSize = 200 * 1024^2) # 200 MB
+# Set maximum file upload size to 500 MB
+options(shiny.maxRequestSize = 500 * 1024^2) 
 
 ############################
 ## UI
