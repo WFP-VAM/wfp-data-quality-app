@@ -1,7 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
+:root {
+    /* Colors */
+    --wfp-primary: #007DBC;
+    --wfp-primary-light: #e6f3f9;
+    --wfp-text: #404040;
+    --wfp-border: #eee;
+
+    /* Spacing */
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 0 15px rgba(0, 0, 0, 0.05);
+
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    color: var(--wfp-text);
+    line-height: 1.6;
+}
+
 /* Base styles */
-body,
+.content-wrapper{
+    background: #ecebeb;
+}
+
 .sidebar,
 .main-header .navbar {
     font-family: 'Open Sans', sans-serif;

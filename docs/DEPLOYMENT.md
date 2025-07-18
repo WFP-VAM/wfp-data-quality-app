@@ -96,8 +96,8 @@ The app uses a custom `shiny-server.conf` file with production-optimized setting
 - **Security**: Runs as `shiny` user
 
 ### File Upload Limits
-The app supports file uploads up to **200MB**. This is configured in both:
-- Shiny app: `options(shiny.maxRequestSize = 200 * 1024^2)`
+The app supports file uploads up to **500MB**. This is configured in both:
+- Shiny app: `options(shiny.maxRequestSize = 500 * 1024^2)`
 - Shiny Server: `app_init_timeout 60`
 
 ## Troubleshooting

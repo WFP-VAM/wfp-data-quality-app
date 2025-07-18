@@ -1,32 +1,24 @@
-library(devtools)
-library(dplyr)
-library(DT)
-library(forcats)
-library(ggplot2)
-library(glue)
-library(haven)
-library(htmltools)
-library(httr)
-library(jsonlite)
-library(kableExtra)
-library(labelled)
-library(lubridate)
-library(openxlsx)
-library(plotly)
-library(purrr)
-library(rlang)
-library(rmarkdown)
-library(rstatix)
-library(scales)
+# Shiny related
 library(shiny)
 library(shinydashboard)
-library(tidyr)
-library(tidyverse)
-library(treemapify) # for treemap
-library(writexl)
-library(wfpthemes)
+library(htmltools)
 
-# custom files
+# File handling
+library(openxlsx)
+library(writexl)
+library(jsonlite)
+
+# Utilities
+library(lubridate)
+library(scales)
+library(glue)
+library(rlang)
+library(httr)
+library(kableExtra)
+library(rmarkdown)
+library(rstatix)
+
+# Custom UI modules
 source("ui/tabs/home.R")
 source("ui/tabs/data_upload.R")
 source("ui/tabs/survey_progress.R")
@@ -40,12 +32,10 @@ source("ui/tabs/fes.R")
 source("ui/tabs/cari.R")
 source("ui/tabs/report.R")
 
-# Set maximum file upload size to 200 MB
-options(shiny.maxRequestSize = 200 * 1024^2) # 200 MB
+# Global options
+options(shiny.maxRequestSize = 500 * 1024^2) 
 
-############################
-## UI
-############################
+#
 ui <- dashboardPage(
     dashboardHeader(title = "WFP Data Quality Check"),
     dashboardSidebar(
@@ -67,89 +57,21 @@ ui <- dashboardPage(
     ),
     dashboardBody(
         tags$head(
-            # includeCSS("https://uikit.wfp.org/cdn/1.21.0/css/styles.min.css"),
             includeCSS("www/custom.css")
         ),
         tabItems(
-
-            # Tab 1: Home
-            tabItem(
-                tabName = "home",
-                homeUI()
-            ),
-            # Tab 2: Data
-            tabItem(
-                tabName = "upload",
-                dataUploadUI()
-            ),
-            # Tab 3: Survey Progress
-            tabItem(
-                tabName = "survey",
-                surveyProgressUI()
-            ),
-
-            # Tab 4: FCS
-            tabItem(
-                tabName = "fcs",
-                fcsUI()
-            ),
-
-            # Tab 5: HHDS
-            tabItem(
-                tabName = "hdds",
-                hhdsUI()
-            ),
-
-            # Tab 6: rCSI
-            tabItem(
-                tabName = "rcsi",
-                rcsiUI()
-            ),
-
-            # Tab 7: HHS
-            tabItem(
-                tabName = "hhs",
-                hhsUI()
-            ),
-
-            # Tab : HHS
-            tabItem(
-                tabName = "matrix",
-                fewsnetMatrixUI()
-
-            ),
-
-            #########################################################################
-            # TAB 9: LIVELIHOOD COPING STRATEGIES (with sub-tabs)
-            #########################################################################
-            tabItem(
-                tabName = "lcs",
-                lcsUI()
-
-            ),
-            #########################################################################
-            # TAB 10: FES (with sub-tabs)
-            #########################################################################
-            tabItem(
-                tabName = "fes",
-                fesUI()
-            ),
-
-            #########################################################################
-            # TAB 11: CARI (with sub-tabs)
-            #########################################################################
-            tabItem(
-                tabName = "cari",
-                cariUI()
-            ),
-
-            #########################################################################
-            # TAB 12: REPORT
-            #########################################################################
-            tabItem(
-                tabName = "report",
-                reportUI()
-
+            tabItem( tabName = "home", homeUI() ),
+            tabItem( tabName = "upload", dataUploadUI() ),
+            tabItem( tabName = "survey", surveyProgressUI() ),
+            tabItem( tabName = "fcs", fcsUI() ),
+            tabItem( tabName = "hdds", hhdsUI() ),
+            tabItem( tabName = "rcsi", rcsiUI() ),
+            tabItem( tabName = "hhs", hhsUI() ),
+            tabItem( tabName = "matrix", fewsnetMatrixUI() ),
+            tabItem( tabName = "lcs", lcsUI() ),
+            tabItem( tabName = "fes", fesUI() ),
+            tabItem( tabName = "cari", cariUI() ),
+            tabItem( tabName = "report", reportUI()
             )
         ) # end tabItems
     )

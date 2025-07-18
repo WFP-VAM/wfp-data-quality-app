@@ -19,7 +19,7 @@ dataUploadUI <- function() {
                         box(
                             title = "Upload SPSS (.sav) Data", width = 6, status = "primary", solidHeader = TRUE,
                             fileInput("file", "Choose a .sav file", accept = ".sav"),
-                            helpText("Allowed size up to 200 MB.")
+                            helpText("Allowed size up to 500 MB.")
                         ),
                         box(
                             title = "File Info", width = 6, status = "info", solidHeader = TRUE,

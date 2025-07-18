@@ -32,7 +32,7 @@ homeUI <- function() {
             status = "primary", solidHeader = TRUE, width = 12,
             HTML(
               "<ol>\
-            <li><strong>Data Upload Tab</strong>: upload your data in <strong>SPSS (.sav)</strong> format. Max size 200 MB.<br>\
+            <li><strong>Data Upload Tab</strong>: upload your data in <strong>SPSS (.sav)</strong> format. Max size 500 MB.<br>\
               <ul>\
                 <li><strong>Upload .sav file</strong>: Select <strong>Upload .sav file</strong> under <strong>Choose data source</strong> dropdown list to browse your file.</li>\
                 <li><strong>MoDa API</strong>: Select <strong>Load from MoDa API (.sav)</strong> from the dropdown list then enter your <strong>Form ID</strong> and your <strong>Token</strong> from MoDa.</li>\
