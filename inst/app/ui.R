@@ -24,6 +24,7 @@ library(tidyr)
 library(tidyverse)
 library(treemapify) # for treemap
 library(writexl)
+library(wfpthemes)
 
 # custom files
 source("ui/tabs/home.R")

@@ -15,8 +15,7 @@ run_app <- function() {
   options(shiny.autoreload.interval = 500)
   shiny::runApp(
     app_dir, 
-    display.mode = "normal"
-    faunch.browser = TRUE)
+    display.mode = "normal")
 }
 
 
