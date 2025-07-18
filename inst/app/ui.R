@@ -66,6 +66,7 @@ ui <- dashboardPage(
     ),
     dashboardBody(
         tags$head(
+            # includeCSS("https://uikit.wfp.org/cdn/1.21.0/css/styles.min.css"),
             includeCSS("www/custom.css")
         ),
         tabItems(
