@@ -3,7 +3,7 @@ source("server/import.R")
 source("server/prepare.R")
 source("server/process.R")
 # Indicators
-source("server/indicators.R")
+source("servers/indicators.R")
 
 ############################
 ## SERVER
@@ -30,8 +30,7 @@ server <- function(input, output, session) {
   ###########################################################################
   # 2) DYNAMIC LCS: EXACT 4 stress, EXACT 3 crisis, EXACT 3 emergency
   ###########################################################################
-  dynamicLCS <- calculate_lcs(input, processed_data)
-
+  dynamicLCS <- get_lcs_variables(input, processed_data)
 
   ###########################################################################
   # 3) DYNAMIC CARI => merges dynamic LCS + user-chosen FCS threshold
