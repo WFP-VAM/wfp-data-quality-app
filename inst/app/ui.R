@@ -20,7 +20,7 @@ library(rstatix)
 
 # Custom UI modules
 source("modules/ui/home.R")
-source("modules/ui/data_upload.R")
+source("modules/ui/dataUploadUI.R")
 source("modules/ui/survey_progress.R")
 source("modules/ui/fcs.R")
 source("modules/ui/hdds.R")
