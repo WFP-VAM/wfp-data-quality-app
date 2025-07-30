@@ -1,16 +1,15 @@
 # Import server files
-source("server/import.R")
-source("server/prepare.R")
-source("server/process.R")
-# Indicators
-source("servers/indicators.R")
+source("modules/server/import.R")
+source("modules/server/prepare.R")
+source("modules/server/process.R")
+source("modules/server/indicators.R")
 
 ############################
 ## SERVER
 ############################
 server <- function(input, output, session) {
 
-  ###########################################################################
+  ##############################yy#############################################
   # 1) READ & PREPARE DATA
   ###########################################################################
   # Get the reactives from the imported functions
