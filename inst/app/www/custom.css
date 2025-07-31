@@ -21,10 +21,18 @@
     --radius-md: 8px;
 }
 
+* {
+font-family: 'Open Sans', sans-serif;
+}
+
 body {
     font-family: 'Open Sans', sans-serif;
     color: var(--wfp-text);
     line-height: 1.6;
+}
+h1, h2, h3, h4, h5, h6{
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 800;
 }
 
 /* Base styles */
@@ -114,9 +122,16 @@ body {
     }
 }
 .box.box-solid.box-primary>.box-header {
-    background-color: rgb(13, 41, 92);
+    background-color: --wfp-primary;
 }
 
 .box.box-solid.box-info>.box-header{
-    background-color: #007DBC;
+    background-color: white;
+    color: #002F5A;
+}
+
+.box.box-solid.box-warning>.box-header {
+    color: #002F5A;
+    background-color: #fff;
+    font-family: 'Open Sans';
 }

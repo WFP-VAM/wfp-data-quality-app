@@ -2,9 +2,9 @@
   # Colors
   #########################
   fcg_colors <- c(
-    "Acceptable" = "#27AE60",
-    "Borderline" = "#F1C40F",
-    "Poor" = "#C0392B"
+    "Acceptable" = "#ECE1B1",
+    "Borderline" = "#E67536",
+    "Poor" = "#E3002B"
   )
   HDDS_colors <- c(
     "Phase 1 (>=5 Food Groups)" = "#c6ffc7",
@@ -22,16 +22,16 @@
     "Phase5" = "#5e0803"
   )
   rCSI_colors <- c(
-    "Phase 1 (0-3)" = "#c6ffc7",
-    "Phase 2 (4-18)" = "#ffe718",
-    "Phase 3 (>=19)" = "#e88400"
+    "Phase 1 (0-3)" = "#ECE1B1",
+    "Phase 2 (4-18)" = "#E67536",
+    "Phase 3 (>=19)" = "#E3002B"
   )
   HHS_colors <- c(
-    "Phase 1 (=0)" = "#c6ffc7",
-    "Phase 2 (=1)" = "#ffe718",
-    "Phase 3 (2-3)" = "#e88400",
-    "Phase 4 (=4)" = "#e02d00",
-    "Phase 5 (5-6)" = "#5e0803"
+    "Phase 1 (=0)" = "#ECE1B1",
+    "Phase 2 (=1)" = "#E6B068",
+    "Phase 3 (2-3)" = "#E67536",
+    "Phase 4 (=4)" = "#E3002B",
+    "Phase 5 (5-6)" = "#91011d"
   )
   LHCS_colors <- c(
     "NoStrategies" = "#F1ECE8",
@@ -43,7 +43,7 @@
     "<50%" = "#ECE1B1",
     "50-65%" = "#E6B068",
     "65-75%" = "#E67536",
-    ">75%" = "#D70000"
+    ">75%" = "#E3002B"
   )
   CARI_Colors <- c(
     "Food secure" = "#FFD7D7",
