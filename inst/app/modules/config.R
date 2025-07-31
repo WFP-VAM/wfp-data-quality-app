@@ -1,10 +1,12 @@
+# library(wfpthemes)
+
   #########################
   # Colors
   #########################
   fcg_colors <- c(
-    "Acceptable" = "#27AE60",
-    "Borderline" = "#F1C40F",
-    "Poor" = "#C0392B"
+    "Acceptable" = "#E3002B",
+    "Borderline" = "#E67536",
+    "Poor" = "#ECE1B1"
   )
   HDDS_colors <- c(
     "Phase 1 (>=5 Food Groups)" = "#c6ffc7",
