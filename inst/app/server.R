@@ -4,7 +4,8 @@ source("modules/server/dataPreviewServer.R")
 source("modules/server/prepare.R")
 source("modules/server/process.R")
 source("modules/server/indicators.R")
-source("modules/server/plot_dynamic_lcs.R")
+source("modules/server/dynamicLCSPlot.R")
+source("modules/server/surveyProgressServer.R")
 source("modules/config.R")
 
 ############################
@@ -59,183 +60,10 @@ server <- function(input, output, session) {
 
   plot_dynamic_lcs(input, output, dynamicLCS, LHCS_colors)
 
-
-
   ###########################################################################
   # 2) SURVEY PROGRESS
   ###########################################################################
-  # A) Submissions Over Time
-  output$plotSubmission <- renderPlotly({
-    df <- reqData()
-    submission <- df %>% group_by(Survey_date) %>% count()
-    p <- ggplot(submission, aes(x = Survey_date, y = n)) +
-      geom_line(color = "steelblue") +
-      theme_minimal() +
-      labs(x = "Date", y = "Number of Submissions")
-    ggplotly(p)
-  })
-
-  # B) Count by Admin1
-  output$plotAdm1 <- renderPlotly({
-    df <- reqData()
-    countsadm1table <- df %>% group_by(ADMIN1Name) %>% count()
-    p <- ggplot(countsadm1table, aes(x = reorder(ADMIN1Name, -n), y = n)) +
-      geom_bar(stat = "identity", fill = "steelblue") +
-      theme_minimal() +
-      labs(x = "ADMIN1Name", y = "Number of surveys")
-    ggplotly(p)
-  })
-
-  # C) Count by Admin2 - Single Admin1Name filter
-  observeEvent(reqData(), {
-    df <- reqData()
-    admin1List <- sort(unique(df$ADMIN1Name))
-    updateSelectInput(
-      session,
-      "admin1Filter",
-      choices = admin1List,
-      selected = admin1List[1]
-    )
-  })
-
-  output$plotAdm2Filter <- renderPlotly({
-    df <- reqData()
-    req(input$admin1Filter)
-
-    # Filter by the selected Admin1Name
-    df_filtered <- df %>% filter(ADMIN1Name == input$admin1Filter)
-
-    counts_by_admin2 <- df_filtered %>%
-      group_by(ADMIN2Name) %>%
-      count() %>%
-      arrange(desc(n))
-
-    p <- ggplot(counts_by_admin2, aes(x = reorder(ADMIN2Name, -n), y = n)) +
-      geom_bar(stat = "identity", fill = "steelblue") +
-      theme_minimal() +
-      labs(x = "ADMIN2Name", y = "Number of surveys") +
-      theme(axis.text.x = element_text(angle = 90))
-    ggplotly(p)
-  })
-
-  # D) Surveys by Enumerator & Admin1Name (Histogram)
-  # 1) when the data first arrives, fill Admin1 dropdown
-  observeEvent(reqData(), {
-    df <- reqData()
-    admin1List <- sort(unique(df$ADMIN1Name))
-    updateSelectInput(
-      session,
-      "admin1FilterEnum",
-      choices = admin1List,
-      selected = admin1List[1]
-    )
-  })
-
-  # 2) when Admin1 changes, fill Admin2 dropdown with only its children
-  observeEvent(input$admin1FilterEnum, {
-    df <- reqData()
-    req(input$admin1FilterEnum)
-
-    # grab the Admin2 list for that Admin1
-    admin2List <- sort(unique(df$ADMIN2Name[
-      df$ADMIN1Name == input$admin1FilterEnum
-    ]))
-
-    # prepend "All"
-    admin2List <- c("All", admin2List)
-
-    # update, default to "All"
-    updateSelectInput(
-      session,
-      "admin2FilterEnum",
-      choices = admin2List,
-      selected = "All"
-    )
-  })
-
-  # 3) now filter on both Admin1 & Admin2 in your histogram
-  output$plotAdm1Enum <- renderPlotly({
-    df <- req(reqData())
-    req(input$admin1FilterEnum, input$admin2FilterEnum)
-
-    # always filter by Admin1
-    df_filtered <- df %>%
-      filter(ADMIN1Name == input$admin1FilterEnum)
-
-    # only filter by Admin2 if not "All"
-    if (input$admin2FilterEnum != "All") {
-      df_filtered <- df_filtered %>%
-        filter(ADMIN2Name == input$admin2FilterEnum)
-    }
-
-    counts <- df_filtered %>%
-      count(EnuName, name = "n")
-
-    p <- ggplot(counts, aes(x = reorder(EnuName, -n), y = n)) +
-      geom_col(fill = "steelblue") +
-      theme_minimal() +
-      labs(x = "Enumerator", y = "Number of surveys") +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-    ggplotly(p)
-  })
-
-  # E) Surveys by Enumerator & Admin2Name (Treemap) - no "All"
-  observeEvent(reqData(), {
-    df <- reqData()
-    enumerators <- sort(unique(df$EnuName))
-    # Remove "All"; user must pick one enumerator
-    updateSelectInput(
-      session,
-      "filterEnumerator",
-      choices = enumerators,
-      selected = enumerators[1]
-    )
-  })
-
-  # 1) Text label: total number of surveys for the selected enumerator
-  output$treemapCountEnumerator <- renderText({
-    df <- reqData()
-    req(input$filterEnumerator)
-    enumerator <- input$filterEnumerator
-
-    # Filter to the enumerator
-    df_enum <- df %>% filter(EnuName == enumerator)
-    totalSurveys <- nrow(df_enum)
-
-    paste(
-      "Enumerator",
-      enumerator,
-      "conducted",
-      totalSurveys,
-      "surveys in total."
-    )
-  })
-
-  # 2) Plotly treemap: number of surveys by Admin2Name
-  output$plotAdm2EnumTree <- renderPlotly({
-    df <- reqData()
-    req(input$filterEnumerator)
-    enumerator <- input$filterEnumerator
-
-    # Subset data to the chosen enumerator
-    df_enum <- df %>% filter(EnuName == enumerator)
-
-    # Summarize how many surveys in each Admin2Name
-    summary_df <- df_enum %>%
-      group_by(ADMIN2Name) %>%
-      summarize(count = n(), .groups = "drop")
-
-    # Create a native Plotly treemap
-    plot_ly(
-      data = summary_df,
-      type = "treemap",
-      labels = ~ADMIN2Name, # what appears on each rectangle
-      values = ~count, # size of rectangle
-      parents = NA, # no hierarchy; top-level
-      textinfo = "label+value" # show name + numeric value
-    )
-  })
+  survey_exploration_module(input, output, session, reqData)
 
   #########################
   # 3) FCS
