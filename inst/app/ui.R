@@ -17,21 +17,13 @@ library(httr)
 library(kableExtra)
 library(rmarkdown)
 library(rstatix)
+library(tidyverse)
 
 # Custom UI modules
-source("modules/ui/home.R")
-source("modules/ui/dataUploadUI.R")
-source("modules/ui/survey_progress.R")
-source("modules/ui/fcs.R")
-source("modules/ui/hdds.R")
-source("modules/ui/rcsi.R")
-source("modules/ui/hhs.R")
-source("modules/ui/matrix.R")
-source("modules/ui/lcs.R")
-source("modules/ui/fes.R")
-source("modules/ui/cari.R")
-source("modules/ui/report.R")
-
+# Import server files
+my_path <- c("modules/ui/") # set your path
+source_files <- list.files(my_path, "*.R$")  # locate all .R files
+map(paste0(my_path, source_files), source) 
 # Global options
 options(shiny.maxRequestSize = 500 * 1024^2) 
 
