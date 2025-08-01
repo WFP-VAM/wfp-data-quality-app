@@ -1,5 +1,5 @@
 # Import server files
-my_path <- c("modules/server") # set your path
+my_path <- c("modules/server/") # set your path
 source_files <- list.files(my_path, "*.R$")  # locate all .R files
 map(paste0(my_path, source_files), source) 
 
@@ -24,7 +24,6 @@ server <- function(input, output, session) {
 
   # -- downstream: same processing for both
   processed_data <- process_data(input, prepared_data)
-
 
   ###########################################################################
   # 5) Provide main data (reqData) for older sub-tabs (Survey, FCS, etc.)
