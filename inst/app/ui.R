@@ -19,18 +19,9 @@ library(rmarkdown)
 library(rstatix)
 
 # Custom UI modules
-source("ui/home.R")
-source("ui/data_upload.R")
-source("ui/survey_progress.R")
-source("ui/fcs.R")
-source("ui/hdds.R")
-source("ui/rcsi.R")
-source("ui/hhs.R")
-source("ui/matrix.R")
-source("ui/lcs.R")
-source("ui/fes.R")
-source("ui/cari.R")
-source("ui/report.R")
+my_path <- c("modules/ui/") # set your path
+source_files <- list.files(my_path, "*.R$") # locate all .R files
+map(paste0(my_path, source_files), source)
 
 # Global options
 options(shiny.maxRequestSize = 500 * 1024^2) 
