@@ -17,6 +17,7 @@ library(httr)
 library(kableExtra)
 library(rmarkdown)
 library(rstatix)
+library(purrr)
 
 # Custom UI modules
 my_path <- c("modules/ui/") # set your path
