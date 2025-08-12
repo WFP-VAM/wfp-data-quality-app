@@ -36,10 +36,10 @@
     "Phase 5 (5-6)" = "#91011d"
   )
   LHCS_colors <- c(
-    "NoStrategies" = "#F1ECE8",
-    "StressStrategies" = "#D5B868",
-    "CrisisStrategies" = "#F37847",
-    "EmergencyStrategies" = "#C00000"
+    "NoStrategies" = "#ECE1B1",
+    "StressStrategies" = "#E6B068",
+    "CrisisStrategies" = "#E67536",
+    "EmergencyStrategies" = "#E3002B"
   )
   FES_Colors <- c(
     "<50%" = "#ECE1B1",
