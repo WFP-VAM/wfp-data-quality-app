@@ -1,30 +1,4 @@
-library(devtools)
-library(dplyr)
-library(DT)
-library(forcats)
-library(ggplot2)
-library(glue)
-library(haven)
-library(htmltools)
-library(httr)
-library(jsonlite)
-library(kableExtra)
-library(labelled)
-library(lubridate)
-library(lubridate)
-library(openxlsx)
-library(plotly)
-library(purrr)
-library(rlang)
-library(rmarkdown)
-library(rstatix)
-library(scales)
-library(shiny)
-library(shinydashboard)
-library(tidyr)
-library(tidyverse)
-library(treemapify) # for treemap
-library(writexl)
+
 
 # Custom UI modules
 my_path <- c("modules/ui/") # set your path
