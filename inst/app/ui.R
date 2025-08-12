@@ -34,16 +34,16 @@ ui <- dashboardPage(
         tabItems(
             tabItem( tabName = "home", homeUI("home") ),
             tabItem( tabName = "upload", dataUploadUI("upload") ),
-            tabItem( tabName = "survey", surveyProgressUI() ),
-            tabItem( tabName = "fcs", fcsUI() ),
-            tabItem( tabName = "hdds", hhdsUI() ),
-            tabItem( tabName = "rcsi", rcsiUI() ),
-            tabItem( tabName = "hhs", hhsUI() ),
-            tabItem( tabName = "matrix", fewsnetMatrixUI() ),
-            tabItem( tabName = "lcs", lcsUI() ),
-            tabItem( tabName = "fes", fesUI() ),
-            tabItem( tabName = "cari", cariUI() ),
-            tabItem( tabName = "report", reportUI()
+            tabItem( tabName = "survey", surveyProgressUI("survey_progress") ),
+            tabItem( tabName = "fcs", fcsUI("fcs") ),
+            tabItem( tabName = "hdds", hhdsUI("hdds") ),
+            tabItem( tabName = "rcsi", rcsiUI("rcsi") ),
+            tabItem( tabName = "hhs", hhsUI("hhs") ),
+            tabItem( tabName = "matrix", fewsnetMatrixUI("matrix") ),
+            tabItem( tabName = "lcs", lcsUI("lcs") ),
+            tabItem( tabName = "fes", fesUI("fes") ),
+            tabItem( tabName = "cari", cariUI("cari") ),
+            tabItem( tabName = "report", reportUI("report")
             )
         ) # end tabItems
     )
