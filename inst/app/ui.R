@@ -27,7 +27,7 @@ map(paste0(my_path, source_files), source)
 # Global options
 options(shiny.maxRequestSize = 500 * 1024^2) 
 
-# UI 
+#
 ui <- dashboardPage(
     dashboardHeader(title = "WFP Data Quality Check"),
     dashboardSidebar(
