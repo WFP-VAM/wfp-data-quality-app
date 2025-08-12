@@ -1,4 +1,5 @@
-surveyProgressUI <- function() {
+surveyProgressUI <- function(id) {
+    ns <- NS(id)
     tagList(
                         fluidRow(
                             tabBox(

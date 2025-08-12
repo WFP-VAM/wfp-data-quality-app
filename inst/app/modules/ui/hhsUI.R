@@ -1,5 +1,6 @@
-hhsUI <- function() {
-tagList(
+hhsUI <- function(id) {
+    ns <- NS(id)
+    tagList(
      fluidRow(
          tabBox(
              id = "hhsTabs", width = 12,
