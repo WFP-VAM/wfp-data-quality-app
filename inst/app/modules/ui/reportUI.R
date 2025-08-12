@@ -1,4 +1,5 @@
-reportUI <- function() {
+reportUI <- function(id) {
+    ns <- NS(id)
     tagList(
         # insert here code
         fluidRow(
