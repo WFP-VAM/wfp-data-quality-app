@@ -8,7 +8,7 @@ This is a support and joint effort from WACARO RAM Team.
 
 ## Features
 
-- Upload data in SPSS format (local format) or directly from MoDa datasets  up to 200MB
+- Upload data in SPSS format (local format) or directly from MoDa datasets  up to 500MB
 - Analyze food security indicators:
   - Food Consumption Score (FCS)
   - Household Dietary Diversity Score (HDDS)
@@ -27,7 +27,7 @@ This is a support and joint effort from WACARO RAM Team.
 ### Prerequisites
 
 - **R Version**: R >= 4.4.3 (as specified in DESCRIPTION)
-- **System Requirements**: Sufficient RAM to handle datasets up to 200MB
+- **System Requirements**: Sufficient RAM to handle datasets up to 500MB
 - **Internet Connection**: Required for MoDa API integration and package installation
 
 ### Step-by-Step Installation
