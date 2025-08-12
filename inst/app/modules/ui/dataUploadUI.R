@@ -1,4 +1,5 @@
-dataUploadUI <- function() {
+dataUploadUI <- function(id) {
+    ns = NS(id)
     tagList(
             fluidRow(
         box(

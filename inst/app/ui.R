@@ -1,31 +1,37 @@
-# Shiny related
-library(shiny)
-library(shinydashboard)
-library(htmltools)
-
-# File handling
-library(openxlsx)
-library(writexl)
-library(jsonlite)
-
-# Utilities
-library(lubridate)
-library(scales)
+library(devtools)
+library(dplyr)
+library(DT)
+library(forcats)
+library(ggplot2)
 library(glue)
-library(rlang)
+library(haven)
+library(htmltools)
 library(httr)
+library(jsonlite)
 library(kableExtra)
+library(labelled)
+library(lubridate)
+library(lubridate)
+library(openxlsx)
+library(plotly)
+library(purrr)
+library(rlang)
 library(rmarkdown)
 library(rstatix)
-library(purrr)
+library(scales)
+library(shiny)
+library(shinydashboard)
+library(tidyr)
+library(tidyverse)
+library(treemapify) # for treemap
+library(writexl)
 
 # Custom UI modules
 my_path <- c("modules/ui/") # set your path
 source_files <- list.files(my_path, "*.R$") # locate all .R files
 map(paste0(my_path, source_files), source)
 
-# Global options
-options(shiny.maxRequestSize = 500 * 1024^2) 
+
 
 # UI 
 ui <- dashboardPage(
@@ -52,8 +58,8 @@ ui <- dashboardPage(
             includeCSS("www/custom.css")
         ),
         tabItems(
-            tabItem( tabName = "home", homeUI() ),
-            tabItem( tabName = "upload", dataUploadUI() ),
+            tabItem( tabName = "home", homeUI("home") ),
+            tabItem( tabName = "upload", dataUploadUI("upload") ),
             tabItem( tabName = "survey", surveyProgressUI() ),
             tabItem( tabName = "fcs", fcsUI() ),
             tabItem( tabName = "hdds", hhdsUI() ),

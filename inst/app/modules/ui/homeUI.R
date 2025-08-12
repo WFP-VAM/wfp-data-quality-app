@@ -1,31 +1,9 @@
-library(devtools)
-library(dplyr)
-library(DT)
-library(forcats)
-library(ggplot2)
-library(glue)
-library(haven)
-library(htmltools)
-library(httr)
-library(jsonlite)
-library(kableExtra)
-library(labelled)
-library(lubridate)
-library(openxlsx)
-library(plotly)
-library(purrr)
-library(rlang)
-library(rmarkdown)
-library(rstatix)
-library(scales)
-library(shiny)
-library(shinydashboard)
-library(tidyr)
-library(tidyverse)
-library(treemapify) # for treemap
-library(writexl)
 
-homeUI <- function() {
+# Global options
+options(shiny.maxRequestSize = 800 * 1024^2) #Max dataset size is 500MB
+
+homeUI <- function(id) {
+  ns <- NS(id)
   tagList(
     fluidRow(
           box(
