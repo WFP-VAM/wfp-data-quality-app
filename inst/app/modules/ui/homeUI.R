@@ -1,6 +1,6 @@
 
 # Global options
-options(shiny.maxRequestSize = 800 * 1024^2) #Max dataset size is 500MB
+options(shiny.maxRequestSize = 500 * 1024^2) #Max dataset size is 500MB
 
 homeUI <- function(id) {
   ns <- NS(id)
