@@ -53,11 +53,12 @@ docker build -t wfp-data-quality-app .
 The Docker build process includes:
 
 1. **System Dependencies**: Install Ubuntu packages needed for R packages
-2. **R Packages**: Install all required R packages from RStudio Package Manager
-3. **Package Installation**: Install the WFP app as an R package using `devtools`
-4. **App Setup**: Copy Shiny app files to the correct locations
-5. **Configuration**: Apply custom Shiny Server settings
-6. **Permissions**: Set proper ownership for the `shiny` user
+2. **renv Setup**: Install renv for reproducible package management
+3. **Package Restoration**: Use `renv::restore()` to install exact package versions from `renv.lock`
+4. **Package Installation**: Install the WFP app as an R package using `devtools`
+5. **App Setup**: Copy Shiny app files to the correct locations
+6. **Configuration**: Apply custom Shiny Server settings
+7. **Permissions**: Set proper ownership for the `shiny` user
 
 **Build Time**: Approximately 3-5 minutes (first build), subsequent builds are faster due to Docker layer caching.
 
@@ -96,8 +97,8 @@ The app uses a custom `shiny-server.conf` file with production-optimized setting
 - **Security**: Runs as `shiny` user
 
 ### File Upload Limits
-The app supports file uploads up to **200MB**. This is configured in both:
-- Shiny app: `options(shiny.maxRequestSize = 200 * 1024^2)`
+The app supports file uploads up to **500MB**. This is configured in both:
+- Shiny app: `options(shiny.maxRequestSize = 500 * 1024^2)`
 - Shiny Server: `app_init_timeout 60`
 
 ## Troubleshooting
