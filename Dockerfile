@@ -20,27 +20,42 @@ RUN apt-get update && apt-get install -y \
     libtiff5-dev \
     libjpeg-dev \
     pandoc \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
-# Install R packages from RStudio Package Manager (faster binary installs)
-# These are all the R packages our Shiny app depends on
-# Using 4 CPU cores (Ncpus=4) to speed up installation
-RUN R -e "options(repos = c(CRAN = 'https://packagemanager.rstudio.com/all/__linux__/noble/latest')); \
-    install.packages(c('shiny', 'shinydashboard', 'dplyr', 'ggplot2', 'tidyverse', 'haven', 'labelled', 'plotly', 'rstatix', 'kableExtra', 'lubridate', 'DT', 'forcats', 'writexl', 'rlang', 'rmarkdown', 'openxlsx', 'htmltools', 'purrr', 'tidyr', 'treemapify', 'glue', 'scales', 'httr', 'jsonlite', 'tools', 'knitr', 'devtools'), Ncpus = 4)"
+# Install renv for reproducible package management
+RUN R -e "install.packages('renv')"
 
-# Copy the entire WFP application source code into container
-# This includes DESCRIPTION, R/, inst/, etc. - the full R package structure
-COPY . /srv/shiny-server/wfp-data-quality-app/
+# Copy renv configuration files first (for optimal Docker layer caching)
+# This allows package restoration to be cached separately from source code changes
+COPY renv.lock /srv/shiny-server/wfp-data-quality-app/
+COPY renv/activate.R /srv/shiny-server/wfp-data-quality-app/renv/
+COPY .Rprofile /srv/shiny-server/wfp-data-quality-app/
+COPY DESCRIPTION /srv/shiny-server/wfp-data-quality-app/
+
+# Set working directory for renv operations
+WORKDIR /srv/shiny-server/wfp-data-quality-app
+
+# Restore R packages from renv.lock (reproducible package versions)
+# This installs exact versions specified in lockfile, replacing manual package list
+RUN R -e "renv::restore()"
+
+# Copy the application source code
+COPY R/ /srv/shiny-server/wfp-data-quality-app/R/
+COPY inst/ /srv/shiny-server/wfp-data-quality-app/inst/
 
 # Install our WFP app as an R package using devtools
-# This makes functions and data available to the Shiny app
-RUN R -e "devtools::install('/srv/shiny-server/wfp-data-quality-app', dependencies = TRUE)"
+# Dependencies already installed via renv::restore()
+RUN R -e "devtools::install('.', dependencies = FALSE)"
 
-# Copy the main Shiny app files to the root directory
+# Return to shiny server working directory
+WORKDIR /srv/shiny-server
+
+# Copy the main Shiny app files to the root directory from the already-copied location
 # Shiny Server will automatically serve app.R from /srv/shiny-server/
 # This makes the app accessible at http://localhost:3838
-COPY inst/app/app.R /srv/shiny-server/app.R
-COPY inst/app/report.Rmd /srv/shiny-server/report.Rmd
+RUN cp /srv/shiny-server/wfp-data-quality-app/inst/app/app.R /srv/shiny-server/app.R
+RUN cp /srv/shiny-server/wfp-data-quality-app/inst/app/report.Rmd /srv/shiny-server/report.Rmd
 
 # Copy custom Shiny Server configuration
 # This overrides default settings (timeouts, logging, etc.)

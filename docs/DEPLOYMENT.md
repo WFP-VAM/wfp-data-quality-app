@@ -16,7 +16,9 @@ This guide covers how to deploy the WFP Data Quality App using Docker for local 
 The application is containerized using Docker for consistent deployment across different environments. The Docker setup includes:
 
 - **Base Image**: `rocker/shiny:4.4.3` (R + Shiny Server + Ubuntu)
-- **Dependencies**: All required R packages and system libraries
+- **Package Management**: renv for reproducible dependency management
+- **Dependencies**: Exact package versions from `renv.lock` (200+ packages)
+- **System Dependencies**: Includes cmake and compilation tools
 - **Configuration**: Production-ready Shiny Server settings
 - **Security**: Runs as non-root `shiny` user
 
@@ -67,7 +69,7 @@ The Docker build process includes:
 ### Basic Run
 ```bash
 docker run -d -p 3838:3838 --name wfp-app wfp-data-quality-app
-# Access at http://localhost:8080
+# Access at http://localhost:3838
 ```
 
 ### Container Management
