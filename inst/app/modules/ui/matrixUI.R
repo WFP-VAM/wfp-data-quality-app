@@ -1,3 +1,6 @@
+library(shiny)
+library(DT)
+
 fewsnetMatrixUI <- function(id) {
     ns <- NS(id)
     tagList(

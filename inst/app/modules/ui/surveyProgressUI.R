@@ -1,3 +1,6 @@
+library(shiny)
+library(plotly)
+
 surveyProgressUI <- function(id) {
     ns <- NS(id)
     tagList(

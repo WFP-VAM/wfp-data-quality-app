@@ -2,6 +2,7 @@
 library(shiny)
 library(shinydashboard)
 library(glue)
+library(purrr)
 
 # Custom UI modules
 my_path <- c("modules/ui/") # set your path
