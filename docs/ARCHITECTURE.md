@@ -1,91 +1,150 @@
 # WFP Survey Data Quality App - Architecture Overview
 
 ## Overview
-This document provides a high-level architectural overview to help developers understand the codebase structure and locate key implementation areas.
+This document provides a high-level architectural overview of the WFP Data Quality App, helping developers understand the modular codebase structure and locate key implementation areas.
 
 ## Application Structure
 
-### Framework & File Organization
-- **Main Application**: `inst/app/app.R` (~5000 lines)
+### Framework & Package Management
+- **Package Management**: `renv` for reproducible dependency management
+  - `renv.lock`: Contains exact versions of 200+ packages
+  - `.Rprofile`: Automatically activates renv on project load
+- **Main Application Entry**: `inst/app/app.R` (39 lines - library imports and app launch)
 - **Package Entry Point**: `R/run_app.R` 
 - **Report Template**: `inst/app/report.Rmd`
 
 *Note: The `inst/` folder contains files that are installed with the package and accessible via `system.file()` at runtime.*
 
-### Code Structure in app.R
+## Modular Architecture
+
+### Core Application Files
 ```
-Lines 1-45:     Package imports and configuration
-Lines 49-1200:  UI definition (shinydashboard)
-Lines 1205-4989: Server logic and reactive functions
+inst/app/
+├── app.R          # Main entry point (39 lines)
+├── ui.R           # UI structure and module loading (50 lines)  
+├── server.R       # Server logic (3,783 lines)
+├── report.Rmd     # Report template
+└── www/
+    └── custom.css # Styling (70 lines)
 ```
 
-## UI Architecture (Lines 49-1204)
+### UI Module Structure
+```
+inst/app/modules/ui/
+├── homeUI.R           # Home page with guidance (66 lines)
+├── dataUploadUI.R     # Data upload & MoDa API (111 lines)
+├── surveyProgressUI.R # Survey monitoring (105 lines)
+├── fcsUI.R           # Food Consumption Score (173 lines)
+├── hddsUI.R          # Household Dietary Diversity (78 lines)
+├── rcsiUI.R          # Reduced Coping Strategy Index (172 lines)
+├── hhsUI.R           # Household Hunger Scale (77 lines)
+├── lcsUI.R           # Livelihood Coping Strategies (177 lines)
+├── fesUI.R           # Food Expenditure Share (141 lines)
+├── cariUI.R          # CARI indicators (88 lines)
+├── matrixUI.R        # FewsNet Matrix (30 lines)
+└── reportUI.R        # Report generation (19 lines)
+```
+
+## UI Architecture
 
 ### Dashboard Structure
 - **Framework**: `shinydashboard` with header, sidebar, and body
-- **Navigation**: 12 main tabs in sidebar menu
-- **Styling**: Custom CSS with WFP branding (lines 49-150)
+- **Navigation**: 12 main tabs using modular UI functions
+- **Styling**: CSS file located at `www/custom.css`
+- **Namespace Implementation**: Each module uses `NS(id)` for ID isolation
 
-### Key UI Sections
+### UI Loading Pattern
 ```r
+# ui.R dynamic module loading
+my_path <- c("modules/ui/")
+source_files <- list.files(my_path, "*.R$")
+map(paste0(my_path, source_files), source)
+
 # Dashboard structure
 dashboardPage(
-  dashboardHeader(...),    # Lines ~50
-  dashboardSidebar(...),   # Lines ~50-70 (12 menu items)
-  dashboardBody(...)       # Lines ~70-1200 (tab content)
+  dashboardHeader(title = "WFP Data Quality Check"),
+  dashboardSidebar(sidebarMenu(...)),
+  dashboardBody(
+    tags$head(includeCSS("www/custom.css")),
+    tabItems(
+      tabItem(tabName = "home", homeUI("home")),
+      tabItem(tabName = "upload", dataUploadUI("upload")),
+      # ... other modular tabs
+    )
+  )
 )
 ```
 
-### Tab Structure (Lines 150-1200)
-Each tab follows this pattern:
-- Home (lines ~150-200): App guidance
-- Data Upload (lines ~200-300): File input + MoDa API
-- Survey Progress (lines ~300-400): Monitoring dashboards
-- Indicators (FCS, HDDS, rCSI, etc.): Analysis interfaces
-- Report (lines ~1100-1200): Report generation
+### Namespace Architecture
+Each UI module implements namespacing:
+```r
+# Pattern used across all UI modules
+moduleUI <- function(id) {
+  ns <- NS(id)
+  tagList(
+    # UI elements automatically namespaced
+  )
+}
+```
 
-## Server Architecture (Lines 1205-4989)
+## Server Architecture
+
+### Core Server File (`server.R`)
+- **Size**: 3,783 lines 
+- **Structure**: All server-side reactive logic and data processing
+- **Integration**: Works with namespaced UI modules
 
 ### Data Flow Core Functions
 
-#### 1. Data Ingestion (Lines 1215-1331)
+#### 1. Data Ingestion
 ```r
-# SPSS file upload
-spss_data <- reactive({ ... })           # Line 1215
+# SPSS file upload handling
+spss_data <- reactive({ ... })
 
 # MoDa API integration  
-moda_data <- eventReactive({ ... })      # Line 1232
+moda_data <- eventReactive({ ... })
 
 # Unified data source
-dataset <- reactive({ ... })             # Line 1331
+dataset <- reactive({ ... })
 ```
 
-#### 2. Data Processing (Lines 2006-2100)
+#### 2. Data Processing
 ```r
 # Main filtered dataset
-reqData <- reactive({ ... })             # Line 2006
+reqData <- reactive({ ... })
 
-# Administrative filters
-# Note: Admin filter reactives are integrated throughout server logic
+# Administrative filters with namespace support
+# Filter reactives integrated throughout server logic
 ```
 
-#### 3. Indicator Calculations (Lines 2000-4000)
-Each food security indicator has dedicated calculation functions:
-- **FCS**: Lines ~2000-2500
-- **HDDS**: Lines ~2500-3000  
-- **rCSI**: Lines ~3000-3500
-- **CARI**: Lines ~3500-4000
+#### 3. Indicator Calculations
+Each food security indicator has dedicated calculation functions in `server.R`:
+- **FCS**: Food Consumption Score analysis (Lines 361-377)
+- **HDDS**: Household Dietary Diversity Score (Lines 380-438)
+- **rCSI**: Reduced Coping Strategy Index (Lines 441-452)
+- **HHS**: Household Hunger Scale (Lines 455-495)
+- **FES**: Food Expenditure Share (Lines 498-590)
+- **LCS**: Livelihood Coping Strategies (Lines 597-673)
+- **CARI**: Consolidated Approach for Reporting Indicators (Lines 676-764)
 
-### Key Helper Functions (Throughout server section)
+## Package Management
+
+### renv Workflow
 ```r
-convert_to_monthly()     # Expenditure standardization
-calc_monthly_expense()   # Monthly calculations
-pct4()                  # 4-point scale percentages
+renv::restore()              # Install exact package versions from renv.lock
+devtools::install(".")       # Install app package
+wfp.data.quality.app::run_app()  # Launch application
+```
+
+### Development Setup
+```r
+# Load the package in development mode
+devtools::load_all(".")
 ```
 
 ## Data Integration Points
 
-### SPSS Files (Lines ~1310-1350)
+### SPSS Files
 ```r
 # File upload handling
 input$spss_file
@@ -93,50 +152,44 @@ haven::read_sav()        # SPSS file reading
 # Expected: 80+ standardized variables
 ```
 
-### MoDa API (Lines ~1350-1400)
+### MoDa API
 ```r
-# API workflow
+# API workflow  
 httr::POST()            # Export job creation
-httr::GET()             # Status polling  
+httr::GET()             # Status polling
 # Handles: Authentication, async exports, ZIP extraction
 ```
 
-## Output Generation (Lines 3500-4984)
+## Configuration
 
-### Visualization Pattern
-Each indicator follows this pattern:
-```r
-# Plot outputs
-output$fcs_plot <- renderPlotly({ ... })
-output$hdds_table <- renderDT({ ... })
-output$rcsi_valuebox <- renderValueBox({ ... })
-```
+### File Upload Limits
+- **Application Limit**: 500MB (`options(shiny.maxRequestSize = 500 * 1024^2)`)
+- **Configuration Location**: `inst/app/modules/ui/homeUI.R:3`
 
-### Report Generation (Line 4920)
-```r
-# R Markdown integration
-output$downloadReport <- downloadHandler({
-  rmarkdown::render("report.Rmd", ...)
-})
-```
+### Styling
+- **CSS Location**: `inst/app/www/custom.css`
+- **WFP Branding**: Custom colors, fonts (Open Sans), and component styling
+- **Responsive Design**: Bootstrap-based layout with custom overrides
 
-## Key Architecture Concepts
+## Key Components
 
-### Reactive Programming
-- **Primary reactive**: `dataset()` (line 1331) - feeds all analyses
-- **Filtered reactive**: `reqData()` (line 2006) - applies user filters
-- **Indicator reactives**: Each indicator has calculation reactives
+### UI Modules
+Each UI module handles a specific section of the application:
+- **homeUI**: Application guidance and variable requirements
+- **dataUploadUI**: File upload and MoDa API integration
+- **surveyProgressUI**: Survey monitoring and progress tracking
+- **Indicator modules** (fcsUI, hddsUI, etc.): Individual food security indicators
+- **reportUI**: Report generation interface
 
-### Code Patterns to Understand
-1. **Data source switching**: Lines 1331-1400 (SPSS vs MoDa)
-2. **Filter cascading**: Throughout server logic (Admin1 → Admin2 → Admin4)
-3. **Indicator calculation**: Lines 2006-4000 (consistent pattern per indicator)
-4. **Output rendering**: Lines 2500-4989 (plots, tables, value boxes)
+### Server Logic
+- **Reactive Programming**: Uses Shiny's reactive framework
+- **Data Processing**: Centralized in `server.R`
+- **Indicator Calculations**: Specific functions for each food security metric
+- **Report Generation**: R Markdown integration
 
-### Development Focus Areas
-- **Data processing**: Lines 1215-2006
-- **Indicator logic**: Lines 2006-4000  
-- **UI/UX**: Lines 49-1204
-- **Integration**: API code around lines 1232-1331
+### Namespace System
+- **ID Isolation**: Each module has its own namespace using `NS(id)`
+- **Module Communication**: Server logic handles cross-module interactions
+- **Reusable Components**: Modules can be used independently
 
-This structure enables developers to quickly locate specific functionality and understand the data flow from upload through analysis to visualization.
+This modular architecture separates concerns across UI modules, server logic, and styling, enabling focused development and maintenance of specific application areas.

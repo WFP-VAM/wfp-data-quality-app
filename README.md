@@ -30,28 +30,19 @@ This is a support and joint effort from WACARO RAM Team.
 - **System Requirements**: Sufficient RAM to handle datasets up to 500MB
 - **Internet Connection**: Required for MoDa API integration and package installation
 
-### Step-by-Step Installation
+### Installation Steps
 
 1. **Install R and RStudio** (if not already installed):
    - Download R from [CRAN](https://cran.r-project.org/)
    - Download RStudio from [Posit](https://posit.co/downloads/)
 
-2. **Install required system dependencies**:
-   ```r
-   # Install devtools if not already installed
-   if (!requireNamespace("devtools", quietly = TRUE)) {
-     install.packages("devtools")
-   }
-   ```
-
-3. **Clone and install the package**:
+2. **Clone the repository**:
    ```bash
-   # Clone the repository locally
    git clone https://github.com/WFP-VAM/wfp-data-quality-app.git
    cd wfp-data-quality-app
    ```
 
-4. **Launch RStudio from the project directory**:
+3. **Launch RStudio from the project directory**:
    ```bash
    # Open RStudio from the current directory
    open wfp-data-quality-app.Rproj    # On macOS
@@ -60,31 +51,34 @@ This is a support and joint effort from WACARO RAM Team.
    # OR simply double-click the .Rproj file in your file manager
    ```
 
-5. **Install the package** (in RStudio):
+4. **Install renv and restore packages** (in RStudio):
    ```r
-   # Install the package with dependencies
-   devtools::install(".", dependencies = TRUE)
+   install.packages("renv")
+   renv::restore()  # Installs exact package versions from renv.lock
+   ```
+
+5. **Install the app as a package**:
+   ```r
+   devtools::install(".", dependencies = FALSE)  # renv already installed deps
    ```
 
 6. **Launch the application**:
    ```r
-   # Load the library
-   library(wfp.data.quality.app)
-   
-   # Launch the application
-   run_app()
+   wfp.data.quality.app::run_app()
    ```
 
-### Dependencies
+### Package Management
 
-The package automatically installs the following dependencies:
-- **Core Shiny**: `shiny`, `shinydashboard`
-- **Data Processing**: `dplyr`, `tidyverse`, `haven`, `labelled`
-- **Visualization**: `ggplot2`, `plotly`, `treemapify`
-- **Statistical Analysis**: `rstatix`
-- **Data Export**: `writexl`, `openxlsx`, `DT`, `kableExtra`
-- **API Integration**: `httr`, `jsonlite`
-- **Other**: `lubridate`, `forcats`, `rlang`, `rmarkdown`, `htmltools`, `purrr`, `tidyr`, `glue`, `scales`, `devtools`
+This project uses **renv** for reproducible package management:
+- `renv.lock` contains exact versions of all dependencies
+- `renv::restore()` installs the same package versions used in development
+- Key dependencies include:
+  - **Core Shiny**: `shiny`, `shinydashboard`
+  - **Data Processing**: `dplyr`, `tidyverse`, `haven`, `labelled`
+  - **Visualization**: `ggplot2`, `plotly`, `treemapify`
+  - **Statistical Analysis**: `rstatix`
+  - **Data Export**: `writexl`, `openxlsx`, `DT`, `kableExtra`
+  - **API Integration**: `httr`, `jsonlite`
 
 
 ### Development Mode
