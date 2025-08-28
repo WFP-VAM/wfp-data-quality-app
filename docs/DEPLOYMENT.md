@@ -16,7 +16,9 @@ This guide covers how to deploy the WFP Data Quality App using Docker for local 
 The application is containerized using Docker for consistent deployment across different environments. The Docker setup includes:
 
 - **Base Image**: `rocker/shiny:4.4.3` (R + Shiny Server + Ubuntu)
-- **Dependencies**: All required R packages and system libraries
+- **Package Management**: renv for reproducible dependency management
+- **Dependencies**: Exact package versions from `renv.lock` (200+ packages)
+- **System Dependencies**: Includes cmake and compilation tools
 - **Configuration**: Production-ready Shiny Server settings
 - **Security**: Runs as non-root `shiny` user
 
@@ -50,24 +52,29 @@ docker build -t wfp-data-quality-app .
 ```
 
 ### Build Process Overview
-The Docker build process includes:
+The Docker build uses a multi-stage process for optimized caching:
 
+**Stage 1: Base**
 1. **System Dependencies**: Install Ubuntu packages needed for R packages
 2. **renv Setup**: Install renv for reproducible package management
-3. **Package Restoration**: Use `renv::restore()` to install exact package versions from `renv.lock`
-4. **Package Installation**: Install the WFP app as an R package using `devtools`
-5. **App Setup**: Copy Shiny app files to the correct locations
-6. **Configuration**: Apply custom Shiny Server settings
-7. **Permissions**: Set proper ownership for the `shiny` user
 
-**Build Time**: Approximately 3-5 minutes (first build), subsequent builds are faster due to Docker layer caching.
+**Stage 2: Dependencies**  
+1. **Package Restoration**: Use `renv::restore()` to install exact package versions from `renv.lock`
+2. **Dependency Caching**: This stage is cached and only rebuilds when `renv.lock` changes
+
+**Stage 3: Runtime**
+1. **App Setup**: Copy installed packages and Shiny app files to the correct locations
+2. **Configuration**: Apply custom Shiny Server settings
+3. **Permissions**: Set proper ownership for the `shiny` user
+
+**Build Time**: Approximately 15 minutes (first build), subsequent builds are faster due to Docker layer caching.
 
 ## Running Locally
 
 ### Basic Run
 ```bash
 docker run -d -p 3838:3838 --name wfp-app wfp-data-quality-app
-# Access at http://localhost:8080
+# Access at http://localhost:3838
 ```
 
 ### Container Management

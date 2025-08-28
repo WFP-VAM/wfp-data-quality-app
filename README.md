@@ -93,6 +93,15 @@ devtools::load_all(".")
 R CMD INSTALL .
 ```
 
+### Docker Deployment
+
+For containerized deployment with reproducible dependencies:
+```bash
+docker build -t wfp-data-quality-app .
+docker run -d -p 3838:3838 wfp-data-quality-app
+```
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed Docker instructions.
+
 ## Requirements
 
 The application requires datasets with standard variable names from survey designer.
