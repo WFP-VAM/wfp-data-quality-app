@@ -1,13 +1,7 @@
-# Use the official R Shiny image as base
-# This includes R, Shiny Server, and Ubuntu OS pre-configured
-FROM rocker/shiny:4.4.3
-
-# Set working directory to Shiny Server's default app location
-# All Shiny apps are served from /srv/shiny-server/
-WORKDIR /srv/shiny-server
+# Stage 1: Base with system dependencies and renv
+FROM rocker/shiny:4.4.3 AS base
 
 # Install system dependencies (Ubuntu packages) required for R packages
-# These C/C++ libraries are needed to compile certain R packages
 RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libssl-dev \
@@ -20,27 +14,43 @@ RUN apt-get update && apt-get install -y \
     libtiff5-dev \
     libjpeg-dev \
     pandoc \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
-# Install R packages from RStudio Package Manager (faster binary installs)
-# These are all the R packages our Shiny app depends on
-# Using 4 CPU cores (Ncpus=4) to speed up installation
-RUN R -e "options(repos = c(CRAN = 'https://packagemanager.rstudio.com/all/__linux__/noble/latest')); \
-    install.packages(c('shiny', 'shinydashboard', 'dplyr', 'ggplot2', 'tidyverse', 'haven', 'labelled', 'plotly', 'rstatix', 'kableExtra', 'lubridate', 'DT', 'forcats', 'writexl', 'rlang', 'rmarkdown', 'openxlsx', 'htmltools', 'purrr', 'tidyr', 'treemapify', 'glue', 'scales', 'httr', 'jsonlite', 'tools', 'knitr', 'devtools'), Ncpus = 4)"
+# Install renv for reproducible package management
+RUN R -e "install.packages('renv')"
 
-# Copy the entire WFP application source code into container
-# This includes DESCRIPTION, R/, inst/, etc. - the full R package structure
-COPY . /srv/shiny-server/wfp-data-quality-app/
+# Create app directory structure
+RUN mkdir -p /srv/shiny-server/wfp/WfpDataQualityApp
+WORKDIR /srv/shiny-server/wfp/WfpDataQualityApp
 
-# Install our WFP app as an R package using devtools
-# This makes functions and data available to the Shiny app
-RUN R -e "devtools::install('/srv/shiny-server/wfp-data-quality-app', dependencies = TRUE)"
+# Stage 2: Application dependencies
+# Using a multi-stage build here ensures the R packages installation step is cached and only re-run if renv.lock changes
+FROM base AS dependencies
 
-# Copy the main Shiny app files to the root directory
-# Shiny Server will automatically serve app.R from /srv/shiny-server/
-# This makes the app accessible at http://localhost:3838
-COPY inst/app/app.R /srv/shiny-server/app.R
-COPY inst/app/report.Rmd /srv/shiny-server/report.Rmd
+# Copy only renv configuration files (dependency definition)
+COPY renv.lock ./
+COPY renv/activate.R ./renv/
+COPY .Rprofile ./
+
+# Configure renv settings
+RUN R -e "renv::settings\$use.cache(FALSE)"
+
+# Restore R packages - this layer is cached unless renv.lock changes
+RUN R -e "renv::restore()"
+
+# Stage 3: Runtime - copy application code and configure server
+FROM base AS runtime
+
+# Copy activation files and renv environment and from the dependencies stage
+COPY --from=dependencies /srv/shiny-server/wfp/WfpDataQualityApp/.Rprofile ./
+COPY --from=dependencies /srv/shiny-server/wfp/WfpDataQualityApp/renv ./renv
+
+# Copy application code
+COPY inst/app/ ./
+
+# Return to shiny server working directory
+WORKDIR /srv/shiny-server
 
 # Copy custom Shiny Server configuration
 # This overrides default settings (timeouts, logging, etc.)
@@ -48,7 +58,6 @@ COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
 
 # Create directories and set ownership for the 'shiny' user
 # Shiny Server runs as 'shiny' user for security
-# Logs will be written to /var/log/shiny-server/
 RUN mkdir -p /var/log/shiny-server && \
     chown -R shiny:shiny /srv/shiny-server && \
     chown -R shiny:shiny /var/log/shiny-server
