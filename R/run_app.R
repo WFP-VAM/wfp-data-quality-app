@@ -8,7 +8,7 @@
 run_app <- function() {
   # Find the folder "app" inside the installed package
   app_dir <- system.file("app", package = "wfp.data.quality.app")
-  if (app_dir == "C:/Users/alioubadara.samake/OneDrive - World Food Programme/Documents/wfp-data-quality-app/inst/app") {
+  if (app_dir == "") {
     stop("Could not find the Shiny app directory. Did you install the 'wfp.data.quality.app' package correctly?")
   }
   shiny::runApp(app_dir, display.mode = "normal")
