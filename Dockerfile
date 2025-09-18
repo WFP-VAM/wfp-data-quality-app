@@ -65,6 +65,9 @@ RUN mkdir -p /var/log/shiny-server && \
 # Expose port 3838 for web access
 EXPOSE 3838
 
+# Change to shiny user so shiny-server is not executed as root
+USER shiny
+
 # Start Shiny Server as main process (PID 1)
 # This will serve the app at http://localhost:3838
 # Reads config from /etc/shiny-server/shiny-server.conf
