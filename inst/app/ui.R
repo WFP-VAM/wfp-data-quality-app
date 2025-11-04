@@ -1,13 +1,15 @@
 
+library(shiny)
+library(shinydashboard)
+library(glue)
+library(purrr)
 
 # Custom UI modules
 my_path <- c("modules/ui/") # set your path
 source_files <- list.files(my_path, "*.R$") # locate all .R files
 map(paste0(my_path, source_files), source)
 
-
-
-#
+# UI 
 ui <- dashboardPage(
     dashboardHeader(title = "WFP Data Quality Check"),
     dashboardSidebar(
