@@ -6,11 +6,13 @@ homeUI <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
-          box(
-            title = "Guidance",
-            status = "primary", solidHeader = TRUE, width = 12,
-            HTML(
-              "<ol>\
+      box(
+        title = "Guidance",
+        status = "primary",
+        solidHeader = TRUE,
+        width = 12,
+        HTML(
+          "<ol>\
             <li><strong>Data Upload Tab</strong>: upload your data in <strong>SPSS (.sav)</strong> format. Max size 500 MB.<br>\
               <ul>\
                 <li><strong>Upload .sav file</strong>: Select <strong>Upload .sav file</strong> under <strong>Choose data source</strong> dropdown list to browse your file.</li>\
@@ -29,18 +31,21 @@ homeUI <- function(id) {
               <strong>This is mandatory for the app to work.</strong>\
             </li>\
             <li>If a variable (e.g. supervisor’s name) is missing, create an empty column named <code>EnuSupervisorName</code>.</li>\
-            <li>If you encounter issues, please contact \
-              <strong><a href='mailto:rbd.ram@wfp.org'>WACARO RAM</a></strong> or \
-              <strong><a href='mailto:alioubadara.samake@wfp.org'>Aliou Badara SAMAKE</a></strong>.\
+            <li>If you encounter problems, please raise an issue
+            <strong><a href='https://github.com/WFP-VAM/wfp-data-quality-app/issues'> on GitHub</a></strong>
+            or contact 
+              <strong><a href='mailto:wfp.vaminfo@wfp.org'>the support email</a></strong>.\
             </li>\
           </ol>"
-            )
-          )
-        ),
+        )
+      )
+    ),
     fluidRow(
       box(
         title = "Required Variables",
-        status = "info", solidHeader = TRUE, width = 12,
+        status = "info",
+        solidHeader = TRUE,
+        width = 12,
         HTML(
           "<table class='table table-striped'>\
             <thead>\
@@ -49,13 +54,13 @@ homeUI <- function(id) {
               </tr>\
             </thead>\
             <tbody>\
-              <tr><td>RESPConsent</td><td>Consent form respondent to do the survey (1 = Yes, 0 = No)</td></tr>\
-              <tr><td>ADMIN1Name</td><td>Admin1 area (region/wilaya)</td></tr>\
-              <tr><td>ADMIN2Name</td><td>Admin2 area (department/cerlce/district)</td></tr>\
-              <tr><td>ADMIN4Name</td><td>Community/village/disaggregated area</td></tr>\
-              <tr><td>EnuSupervisorName</td><td>Name of supervisor</td></tr>\
+              <tr><td>RESPConsent</td><td>Consent from respondent on being interviewed (1 = Yes, 0 = No)</td></tr>\
+              <tr><td>ADMIN1Name</td><td>Admin 1 Area Name </td></tr>\
+              <tr><td>ADMIN2Name</td><td>Admin 2 Area Name </td></tr>\
+              <tr><td>ADMIN4Name</td><td>Admin 4 Area Name</td></tr>\
+              <tr><td>EnuSupervisorName</td><td>Name of Enumerator Supervisor</td></tr>\
               <tr><td>EnuName</td><td>Name of Enumerator</td></tr>\
-              <tr><td>HHSizeCalc</td><td>Household size (Total number of household members)</td></tr>\
+              <tr><td>HHSizeCalc</td><td>Household Size (Total number of household members)</td></tr>\
             </tbody>\
           </table>"
         )
