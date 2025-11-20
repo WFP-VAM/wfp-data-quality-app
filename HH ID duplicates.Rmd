@@ -1,0 +1,82 @@
+---
+title: "Flagging Duplicates"
+author: "Noha.G"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r, include=FALSE}
+##installing and recalling packages
+
+library(renv)
+library(devtools)
+library(haven)
+library(tidyverse)
+```
+
+```{r, include=FALSE}
+setwd("C:/Users/noha.gamil/OneDrive - World Food Programme/RBC Monitoring/PSCO")
+dir()
+```
+
+Uploading Sample Data
+
+```{r, results='hide'}
+data<-read_sav("sample data.sav" )
+ncol(data)
+```
+
+### **Detecting all Duplicated HH IDs**
+
+```{r, include=TRUE}
+###Check if there are ANY duplicated IDs
+
+any_duplicates <- any(duplicated(data$`@_uuid`))
+
+print(any_duplicates)
+```
+
+If the output is FALSE stop here, if TRUE then go to the next step to identify the IDs with duplicates
+
+```{r}
+
+hh_ID_count<-table(data$`@_uuid`) # calculate the frequency of HH IDs
+
+duplicated_ids<-as.data.frame(hh_ID_count[hh_ID_count>1]) ## filter ids repeated more than once
+print(duplicated_ids)
+```
+
+
+```{r}
+
+# Add a new column 'flagged_Duplicates' to the original data
+data$flagged_Duplicates <- data$`@_uuid` %in% names(hh_ID_count[hh_ID_count > 1])
+dim(data)
+names(data)
+```
+
+Check completeness across all other variables with duplicates
+
+then return the duplicated HH IDs with the most filled-in value
+```{r}
+
+data2<- data %>% mutate(non_missing_data=rowSums(!is.na(.)))
+completed_recods<-data2%>%group_by(data2$`@_uuid`)%>%filter(n()>1)%>%slice_max(non_missing_data, n=1, with_ties=FALSE)%>% ungroup
+
+dim(data)
+dim(data2)
+```
+
+for duplicated UUIDs, check the date and leave the one with the most recent date
+```{r}
+## make sure the today date is set as date
+data$today<-as.Date(data$today)
+
+#Keep the HH_ID with the most recent date
+
+clean_data<-data%>% group_by(data$`@_uuid`)%>% slice_max(today, n=1, with_ties = FALSE)%>%ungroup()
+dim(data)
+dim(clean_data)
+```
+
+
