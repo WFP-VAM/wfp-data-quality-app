@@ -63,7 +63,7 @@ This is a support and joint effort from WACARO RAM Team.
    ```
 
 6. **Launch the application**:
-   ```r
+   ```{r}
    wfp.data.quality.app::run_app()
    ```
 
